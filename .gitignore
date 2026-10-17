@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+resources/
+build/
+playwright-report/
+test-results/
+*.local
+.DS_Store
+desktop-capture/
