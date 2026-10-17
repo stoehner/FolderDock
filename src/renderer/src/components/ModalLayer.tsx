@@ -40,10 +40,23 @@ export function ModalLayer() {
   if (!modal) return null
 
   if (modal.type === 'editor' && editor) {
-    return <EditorModal />
+    return (
+      <div className="modal-layer" data-editor-layer="true">
+        <EditorModal />
+      </div>
+    )
   }
 
-  return <div className="modal-layer">{renderModal(modal)}</div>
+  return (
+    <div
+      className="modal-layer"
+      onClick={e => {
+        if (e.target === e.currentTarget) useUI.getState().closeModal()
+      }}
+    >
+      {renderModal(modal)}
+    </div>
+  )
 }
 
 function renderModal(modal: NonNullable<ReturnType<typeof useUI.getState>['modal']>): React.ReactNode {

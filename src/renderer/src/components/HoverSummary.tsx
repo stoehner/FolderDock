@@ -16,6 +16,7 @@ export function HoverSummary() {
   const [visible, setVisible] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const current = useRef<string | null>(null)
+  const visibleRef = useRef(false)
 
   useEffect(() => {
     function clearTimer() {
@@ -27,6 +28,7 @@ export function HoverSummary() {
     function hide() {
       clearTimer()
       current.current = null
+      visibleRef.current = false
       setVisible(false)
       setTarget(null)
     }
@@ -39,6 +41,7 @@ export function HoverSummary() {
       current.current = relPath
       timer.current = setTimeout(() => {
         const r = el.getBoundingClientRect()
+        visibleRef.current = true
         setTarget({ relPath, x: r.right, y: r.top })
         setVisible(true)
       }, DELAY_MS)
@@ -49,7 +52,9 @@ export function HoverSummary() {
       hide()
     }
     const onDrag = (): void => hide()
-    const onScroll = (): void => hide()
+    const onScroll = (): void => {
+      if (visibleRef.current) hide()
+    }
     window.addEventListener('mouseover', onOver)
     window.addEventListener('mouseout', onOut)
     window.addEventListener('dragstart', onDrag, true)

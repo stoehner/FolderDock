@@ -386,7 +386,16 @@
 }
 .markdown-preview ul,
 .markdown-preview ol {
-  padding-left: 18px;
+  padding-left: 22px;
+}
+.markdown-preview ul {
+  list-style: disc;
+}
+.markdown-preview ol {
+  list-style: decimal;
+}
+.markdown-preview li {
+  margin: 3px 0;
 }
 .markdown-preview p {
   margin: 8px 0;
