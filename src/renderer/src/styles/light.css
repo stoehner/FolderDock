@@ -1,0 +1,324 @@
+body.light {
+  --bg: #e8edf1;
+  --panel: #e9edef;
+  --panel-hi: #fff;
+  --line: rgba(46, 63, 80, 0.13);
+  --line-strong: rgba(46, 63, 80, 0.25);
+  --text: #222c35;
+  --secondary: #536474;
+  --muted: #667480;
+}
+body.light .app {
+  background: radial-gradient(ellipse at 50% 30%, #f4f7f9, #d3dce2);
+}
+body.light .titlebar {
+  background: #e2e9ed;
+  border-color: #bfcbd3;
+}
+body.light .brand-mark {
+  background: #c9d8e2;
+  color: #315e7d;
+}
+body.light .titlebar .submark {
+  color: #74828e;
+}
+body.light .toolbar {
+  background: linear-gradient(180deg, #eff3f4, #e7ecef);
+}
+body.light .toolbar-kicker {
+  color: #6d8492;
+}
+body.light .search {
+  background: #fbfcfc;
+  color: #647b8b;
+}
+body.light .search input {
+  color: #17232d;
+}
+body.light .search input::placeholder {
+  color: #768692;
+}
+body.light .heading-row p {
+  color: #5c6873;
+}
+body.light .section-label {
+  color: #37444e;
+}
+body.light .section-label span {
+  color: #637888;
+}
+body.light .filter-chip {
+  color: #677c8c;
+}
+body.light .filter-chip.active {
+  background: #d3e2ea;
+  color: #36566b;
+  border-color: #b7ccd9;
+}
+body.light .library-scroll {
+  background: #e6ebee;
+  scrollbar-color: #abb9c5 #e6ebee;
+}
+body.light .folder-card {
+  background: rgba(255, 255, 255, 0.43);
+  border-color: #d1dbe1;
+}
+body.light .folder-card.is-open {
+  background: #f3f6f8;
+  border-color: #89b4cb;
+}
+body.light .folder-inside {
+  background: linear-gradient(180deg, #acbac7, #c7d0da);
+}
+body.light .inside-title {
+  color: #344858;
+}
+body.light .file-row {
+  background: #eaf0f5;
+  border-color: #c6d2dd;
+  color: #283744;
+}
+body.light .file-row:hover {
+  background: #fff;
+  border-color: #9ab8ce;
+}
+body.light .file-row .file-meta {
+  color: #60778a;
+}
+body.light .folder-front {
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.35), rgba(235, 243, 248, 0.5), rgba(86, 108, 125, 0.65));
+}
+body.light .folder-topbtn {
+  background: #3c58648a;
+}
+body.light .folder-grip {
+  color: #35505e;
+}
+body.light .footer {
+  background: #e4eaee;
+  color: #607380;
+}
+body.light .toolbar-round {
+  background: #dbe5ea;
+  color: #4c687b;
+}
+body.light .footer .links button {
+  color: #58768a;
+}
+body.light .footer .links button:hover {
+  color: #243a49;
+}
+body.light .empty {
+  color: #5d6c79;
+  border-color: #b9c7d1;
+}
+body.light .empty h3 {
+  color: #2c3d4b;
+}
+body.light .error-banner {
+  background: #f6e2de;
+  border-color: #d69a8d;
+  color: #8c3d2e;
+}
+body.light .search kbd {
+  border-color: #c3d2da;
+  color: #7d909c;
+}
+body.light .win-btn {
+  color: #64798a;
+}
+body.light .win-btn:hover {
+  background: #d3dde3;
+}
+body.light .win-btn.close:hover {
+  background: #b34a41;
+  color: #fff;
+}
+body.light .modal {
+  background: #eaf0f4;
+  color: #263745;
+  border-color: #aabecb;
+}
+body.light .modal-head,
+body.light .modal-foot {
+  border-color: #cbd7e0;
+}
+body.light .modal-head strong {
+  color: #22303b;
+}
+body.light .modal-head p,
+body.light .field-label,
+body.light .helper {
+  color: #506b7d;
+}
+body.light .helper .mono {
+  color: #40596b;
+}
+body.light .field {
+  background: #fff;
+  color: #263745;
+  border-color: #b0c4d1;
+}
+body.light .modal-head-icon {
+  background: #d0e1eb;
+  color: #376784;
+}
+body.light .editor-textarea,
+body.light .markdown-preview {
+  background: #fff;
+  color: #263745;
+  border-color: #b5c8d4;
+}
+body.light .markdown-preview h1,
+body.light .markdown-preview h2,
+body.light .markdown-preview h3,
+body.light .markdown-preview h4 {
+  color: #1b303e;
+}
+body.light .markdown-preview code {
+  background: #dde9f0;
+  color: #23557a;
+}
+body.light .markdown-preview pre {
+  background: #eef3f6;
+}
+body.light .editor-tab.active {
+  background: #d7e5ee;
+  color: #315f77;
+}
+body.light .editor-tab {
+  color: #597183;
+}
+body.light .image-view {
+  background: #e8eef2;
+}
+body.light .file-not-real {
+  color: #465d6f;
+  background: #dde7ed;
+}
+body.light .context-menu {
+  background: #f2f6f9;
+  border-color: #b5c6d2;
+}
+body.light .context-menu button {
+  color: #33475a;
+}
+body.light .context-menu button:hover {
+  background: #dbe7ef;
+}
+body.light .context-menu .separator {
+  background: #cdd9e1;
+}
+body.light .swatch {
+  outline-color: #93a7b5;
+}
+body.light .side-preview {
+  background: #e9eff3f2;
+  border-left-color: #b5c6d2;
+}
+body.light .side-preview .side-header {
+  border-color: #00000014;
+}
+body.light .side-preview .side-kicker {
+  color: #44718e;
+}
+body.light .side-preview .side-title {
+  color: #22303b;
+}
+body.light .side-preview .side-close {
+  background: #0000000c;
+  border-color: #00000022;
+  color: #44586a;
+}
+body.light .side-preview .side-info {
+  border-color: #00000010;
+  color: #5d7386;
+}
+body.light .side-preview .side-pill {
+  background: #00000010;
+}
+body.light .side-preview .side-body {
+  background: #ffffff70;
+}
+body.light .side-preview .side-body .plain-preview {
+  color: #33424e;
+}
+body.light .side-preview .side-footer {
+  border-color: #00000018;
+}
+body.light .side-preview .side-empty {
+  color: #52677a;
+}
+body.light .secondary-button {
+  background: #dde6ec;
+  border-color: #b8c8d3;
+  color: #3c5265;
+}
+body.light .secondary-button:hover {
+  background: #cfdee8;
+}
+body.light .toast {
+  background: #ffffff;
+  border-color: #9fb6c6;
+  color: #2a3d4d;
+  box-shadow: 0 15px 45px #0003;
+}
+body.light .toast.error {
+  background: #fbeae7;
+  border-color: #cf9184;
+  color: #7c3122;
+}
+body.light .drop-hint-bar {
+  background: #ffffffee;
+  border-color: #7fa8c4;
+  color: #33566e;
+}
+body.light .file-summary {
+  background: #fffffffa;
+  border-color: #9fb9cb;
+  color: #253645;
+  box-shadow: 0 15px 50px #0004;
+}
+body.light .file-summary .peek-kicker {
+  color: #44718e;
+}
+body.light .file-summary .peek-name {
+  color: #1d2f3d;
+}
+body.light .file-summary .peek-body {
+  color: #48607a;
+}
+body.light .file-summary .peek-foot {
+  color: #6d8494;
+  border-color: #00000014;
+}
+body.light .move-option {
+  background: #fff;
+  border-color: #b5c8d4;
+  color: #33506a;
+}
+body.light .move-option:hover {
+  background: #e7f1f7;
+}
+body.light .theme-choice {
+  background: #fff;
+  border-color: #b5c8d4;
+  color: #3c5265;
+}
+body.light .theme-choice.active {
+  background: #d7e8f2;
+  border-color: #6ea9cd;
+  color: #1e4560;
+}
+body.light .settings-row {
+  border-color: #d3dee6;
+}
+body.light .settings-row .settings-label {
+  color: #2c3f4e;
+}
+body.light .settings-row .settings-sub {
+  color: #5d7588;
+}
+body.light .pdf-note {
+  color: #5d7588;
+}

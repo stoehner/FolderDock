@@ -2,7 +2,8 @@ import { shell } from 'electron'
 import fsSync from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { extractExcerpt, looksBinary } from '../../shared/excerpt'
+import { extractExcerpt } from '../../shared/excerpt'
+import { looksBinary } from './binary'
 import { extOf, isTextKind, kindForExt } from '../../shared/kinds'
 import {
   UNSORTED,

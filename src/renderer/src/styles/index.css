@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import './base.css';
+@import './folder.css';
+@import './panels.css';
+@import './light.css';

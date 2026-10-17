@@ -36,6 +36,7 @@ export interface FolderDockBridge {
   minimize(): void
   toggleMaximize(): void
   close(): void
+  widen(width: number): void
   getPathForFile(file: File): string
   onLibraryChanged(cb: () => void): () => void
   onWindowMaximized(cb: (maximized: boolean) => void): () => void

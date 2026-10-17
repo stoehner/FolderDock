@@ -94,8 +94,8 @@ if (!gotLock) {
     mainWindow = createWindow({ prefs: prefsStore })
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        mainWindow = createWindow({ prefs: prefsStore! })
+      if (BrowserWindow.getAllWindows().length === 0 && prefsStore) {
+        mainWindow = createWindow({ prefs: prefsStore })
       }
     })
   })

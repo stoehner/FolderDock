@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractExcerpt, firstHeading, looksBinary } from './excerpt'
+import { extractExcerpt, firstHeading } from './excerpt'
 import { DEFAULT_PREFS, mergePrefs, prunePrefs } from './prefs'
 import { kindForExt, extOf } from './kinds'
 
@@ -28,15 +28,6 @@ describe('firstHeading', () => {
   })
   it('returns null when absent', () => {
     expect(firstHeading('no headings')).toBeNull()
-  })
-})
-
-describe('looksBinary', () => {
-  it('flags NUL-containing buffers', () => {
-    expect(looksBinary(Buffer.from([0x00, 0x01, 0x02]))).toBe(true)
-  })
-  it('accepts plain text', () => {
-    expect(looksBinary(Buffer.from('plain utf8 text'))).toBe(false)
   })
 })
 

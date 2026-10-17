@@ -1,0 +1,582 @@
+.folder-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.031), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.072);
+  border-radius: 16px;
+  min-width: 0;
+  padding: 8px 8px 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+  transition: border-color 0.2s, background 0.25s;
+  contain: layout style;
+}
+.folder-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.folder-card.is-open {
+  border-color: rgba(121, 157, 180, 0.39);
+  background: linear-gradient(180deg, rgba(69, 91, 108, 0.13), rgba(255, 255, 255, 0.035));
+}
+.folder-card.drop-target {
+  border-color: #6cbded;
+  box-shadow: inset 0 0 0 2px rgba(73, 166, 221, 0.45);
+}
+.folder-card.dragging-card {
+  opacity: 0.44;
+}
+.folder-scene {
+  height: 210px;
+  position: relative;
+  perspective: 960px;
+  cursor: pointer;
+  user-select: none;
+  isolation: isolate;
+}
+.folder-back {
+  position: absolute;
+  inset: 20px 7px 12px;
+  border-radius: 15px 15px 14px 14px;
+  z-index: 1;
+  background: #697989;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.3));
+  transform: perspective(900px) rotateX(0);
+  transition: transform 0.55s;
+}
+.folder-back::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 43%;
+  height: 27px;
+  border-radius: 13px 15px 0 0;
+  background: var(--tab, #596877);
+}
+.folder-art {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: var(--art, linear-gradient(125deg, #8297a7, #374c5b));
+  opacity: 0.91;
+}
+.folder-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.17), transparent 26%, rgba(0, 0, 0, 0.21) 84%);
+  mix-blend-mode: soft-light;
+}
+.folder-back .top-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.27);
+}
+.sheet {
+  position: absolute;
+  z-index: 2;
+  bottom: 22px;
+  left: 17%;
+  width: 68%;
+  height: 119px;
+  border-radius: 9px 9px 3px 3px;
+  transform-origin: 50% 85%;
+  box-shadow: 0 3px 16px rgba(11, 16, 25, 0.25);
+  border: 1px solid rgba(24, 31, 42, 0.12);
+  background: linear-gradient(155deg, #f6f7f7, #ccd5db);
+  transition: transform 0.65s cubic-bezier(0.2, 0.85, 0.24, 1), bottom 0.65s cubic-bezier(0.2, 0.85, 0.24, 1);
+  padding: 14px;
+  overflow: hidden;
+}
+.sheet.s1 {
+  transform: translate(-12px, -27px) rotate(-9deg);
+}
+.sheet.s2 {
+  transform: translate(7px, -27px) rotate(7deg);
+}
+.sheet.s3 {
+  transform: translate(0, -27px) rotate(-1deg);
+}
+.folder-card:not(.is-open):hover .sheet.s1 {
+  transform: translate(-18px, -65px) rotate(-12deg);
+}
+.folder-card:not(.is-open):hover .sheet.s2 {
+  transform: translate(18px, -65px) rotate(12deg);
+}
+.folder-card:not(.is-open):hover .sheet.s3 {
+  transform: translate(0, -61px) rotate(-1deg);
+}
+.folder-card.is-open .sheet.s1 {
+  transform: translate(-18px, -82px) rotate(-10deg);
+}
+.folder-card.is-open .sheet.s2 {
+  transform: translate(18px, -82px) rotate(10deg);
+}
+.folder-card.is-open .sheet.s3 {
+  transform: translate(0, -75px) rotate(0);
+}
+.folder-scene.leaf-count-2 .sheet.s2 {
+  left: 8%;
+  width: 61%;
+}
+.folder-scene.leaf-count-2 .sheet.s3 {
+  left: 31%;
+  width: 61%;
+}
+.folder-scene.leaf-count-1 .sheet.s3 {
+  left: 16%;
+  width: 68%;
+}
+.document-sheet {
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: pan-y;
+  outline-offset: 3px;
+}
+.document-sheet:active {
+  cursor: grabbing;
+}
+.document-sheet:hover,
+.document-sheet:focus-visible {
+  border-color: rgba(62, 115, 144, 0.5);
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.38), 0 0 0 2px rgba(148, 201, 227, 0.52);
+  filter: brightness(1.07);
+}
+.document-sheet .sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+.document-sheet .sheet-ext {
+  font-size: 7px;
+  font-weight: 780;
+  color: #456077;
+  letter-spacing: 0.055em;
+}
+.document-sheet .mini-badge {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 8px;
+  display: block;
+  max-width: 100%;
+}
+.document-sheet .sheet-title {
+  color: #415565;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.23;
+  margin-top: 10px;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.document-sheet .sheet-text {
+  color: #738491;
+  font-size: 7px;
+  margin-top: 6px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.document-sheet .sheet-grab {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 8px;
+  color: #49647b;
+  background: #d7e6f0dd;
+  border-radius: 4px;
+  padding: 2px 4px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.document-sheet:hover .sheet-grab,
+.document-sheet:focus-visible .sheet-grab {
+  opacity: 1;
+}
+.sheet.empty-sheet {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.folder-front {
+  position: absolute;
+  z-index: 5;
+  bottom: 0;
+  left: 6px;
+  right: 6px;
+  height: 132px;
+  border-radius: 12px 12px 14px 14px;
+  transform-origin: center bottom;
+  transform: perspective(750px) rotateX(-3deg);
+  transition: transform 0.66s cubic-bezier(0.22, 0.83, 0.26, 1);
+  border: 1px solid rgba(255, 255, 255, 0.37);
+  background: linear-gradient(175deg, rgba(242, 247, 255, 0.39), rgba(171, 185, 199, 0.4) 42%, rgba(56, 70, 87, 0.74) 100%);
+  -webkit-backdrop-filter: blur(17px) saturate(1.1);
+  backdrop-filter: blur(17px) saturate(1.1);
+  box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.18), 0 12px 24px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  pointer-events: auto;
+}
+.folder-front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 85% 60% at 20% 0, rgba(255, 255, 255, 0.37), transparent 70%);
+  opacity: 0.68;
+}
+.folder-card:hover .folder-front {
+  transform: perspective(750px) rotateX(-13deg);
+}
+.folder-scene:has(.document-sheet:hover) .folder-front {
+  transform: perspective(750px) rotateX(-18deg);
+}
+.folder-card.is-open .folder-front {
+  transform: perspective(750px) rotateX(-24deg);
+}
+.folder-card.is-open .folder-scene:has(.document-sheet:hover) .folder-front {
+  transform: perspective(750px) rotateX(-27deg);
+}
+.folder-card.dragging-paper .folder-front {
+  transform: perspective(750px) rotateX(-31deg);
+}
+.folder-label {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  right: 12px;
+  text-shadow: 0 1px 7px rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+.folder-label .name {
+  font-size: 15px;
+  font-weight: 710;
+  color: #fff;
+  letter-spacing: -0.3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.folder-label .details {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.76);
+  margin-top: 3px;
+}
+.folder-sheet-hint {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.025em;
+  color: #9fb2c2;
+  z-index: 8;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.folder-card:hover .folder-sheet-hint,
+.folder-card.is-open .folder-sheet-hint {
+  opacity: 1;
+}
+.document-sheet.paper-dragging {
+  opacity: 0.48;
+  filter: brightness(1.1);
+}
+.folder-actions {
+  position: absolute;
+  z-index: 9;
+  right: 15px;
+  top: 23px;
+  display: flex;
+  gap: 5px;
+}
+.folder-topbtn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #f5f7f9;
+  background: rgba(15, 23, 31, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.folder-topbtn:hover {
+  background: rgba(18, 29, 39, 0.7);
+}
+.folder-topbtn .icon {
+  width: 15px;
+  height: 15px;
+}
+.folder-grip {
+  position: absolute;
+  left: 17px;
+  top: 24px;
+  z-index: 7;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.folder-grip:active {
+  cursor: grabbing;
+}
+.folder-card:hover .folder-grip,
+.folder-grip:focus-visible {
+  opacity: 1;
+}
+.folder-inside {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.52s cubic-bezier(0.22, 0.81, 0.24, 1), opacity 0.25s, padding 0.45s;
+  pointer-events: none;
+  position: relative;
+  border-radius: 0 0 12px 12px;
+  margin: -5px 5px 0;
+  background: linear-gradient(180deg, rgba(162, 178, 192, 0.29), rgba(111, 128, 144, 0.17) 75%, rgba(79, 99, 118, 0.14));
+  border: 1px solid transparent;
+  padding: 0 9px;
+}
+.folder-card.is-open .folder-inside {
+  max-height: 400px;
+  opacity: 1;
+  pointer-events: auto;
+  padding: 14px 9px 10px;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.folder-inside::before {
+  content: '';
+  height: 1px;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.13);
+}
+.inside-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+.inside-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 780;
+  color: #adbdcd;
+  letter-spacing: 0.12em;
+}
+.inside-tools {
+  display: flex;
+  gap: 3px;
+}
+.inside-tool {
+  border: 0;
+  background: rgba(255, 255, 255, 0.05);
+  height: 25px;
+  width: 25px;
+  color: #c0d0de;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+}
+.inside-tool:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.inside-tool svg {
+  width: 13px;
+  height: 13px;
+}
+.file-list {
+  max-height: 224px;
+  min-height: 34px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #607588 #46536117;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 1px 3px 1px 1px;
+}
+.file-row {
+  height: 41px;
+  min-height: 41px;
+  width: 100%;
+  border: 1px solid rgba(235, 243, 252, 0.075);
+  background: rgba(18, 25, 34, 0.48);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 8px;
+  cursor: grab;
+  color: #dfe7ee;
+  position: relative;
+  text-align: left;
+}
+.file-row:hover {
+  border-color: rgba(138, 185, 212, 0.42);
+  background: rgba(29, 41, 52, 0.8);
+}
+.file-row:active {
+  cursor: grabbing;
+}
+.file-row .typeicon {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 26px;
+  border-radius: 5px;
+  background: #2d485d;
+  color: #a9d4ef;
+  flex: none;
+}
+.file-row .typeicon.image {
+  background: #4c405f;
+  color: #d7b9ec;
+}
+.file-row .typeicon.pdf {
+  background: #5f3e3e;
+  color: #f2b7ad;
+}
+.file-row .typeicon.text {
+  background: #485051;
+  color: #dce2df;
+}
+.file-row .typeicon svg {
+  width: 14px;
+  height: 14px;
+}
+.file-row .file-info {
+  min-width: 0;
+  flex: 1;
+}
+.file-row .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10.7px;
+  font-weight: 620;
+}
+.file-row .file-meta {
+  color: #92a1ae;
+  font-size: 9.3px;
+  margin-top: 2px;
+}
+.file-row .file-more {
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: #a3b2bf;
+  padding: 3px;
+  opacity: 0.85;
+}
+.file-row .file-more:hover {
+  background: #334350;
+  color: #fff;
+}
+.file-row .file-more .icon {
+  width: 15px;
+  height: 15px;
+}
+.file-row.is-selected {
+  border-color: #6eabcc;
+  background: rgba(61, 107, 138, 0.48);
+}
+.file-empty {
+  font-size: 11px;
+  padding: 18px 5px;
+  color: #abb8c5;
+  text-align: center;
+}
+.drop-hint {
+  margin-top: 8px;
+  border: 1px dashed rgba(188, 208, 224, 0.24);
+  border-radius: 7px;
+  text-align: center;
+  color: #9cabb9;
+  padding: 9px 5px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.drop-hint svg {
+  width: 13px;
+  height: 13px;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 390;
+  width: 190px;
+  padding: 5px;
+  background: #252c34;
+  border: 1px solid #4a5967;
+  border-radius: 10px;
+  box-shadow: 0 15px 38px #0009;
+  animation: appear 0.13s ease-out;
+}
+.context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  color: #d7e0e7;
+  padding: 9px 8px;
+  font-size: 11px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+}
+.context-menu button:hover {
+  background: #35434f;
+}
+.context-menu button.danger {
+  color: #f4aaa3;
+}
+.context-menu .separator {
+  height: 1px;
+  background: #3d4854;
+  margin: 4px 3px;
+}
+.context-menu button .icon {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 660px) {
+  .folder-card:not(.is-open):hover .sheet.s3 {
+    transform: translate(0, -48px) rotate(0);
+  }
+  .folder-card.is-open .sheet.s3 {
+    transform: translate(0, -63px) rotate(0);
+  }
+  .folder-sheet-hint {
+    font-size: 8px;
+  }
+  .document-sheet .sheet-title {
+    font-size: 9px;
+  }
+  .document-sheet .sheet-text {
+    display: none;
+  }
+}

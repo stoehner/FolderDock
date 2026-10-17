@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, screen, shell } from 'electron'
 import fsSync from 'node:fs'
 import path from 'node:path'
 import type { Prefs } from '../shared/types'
@@ -132,4 +132,17 @@ export function registerIpc(ctx: MainContext): void {
     else win.maximize()
   })
   ipcMain.on('window:close', () => ctx.getWindow()?.close())
+  ipcMain.on('window:widen', (_e, width: unknown) => {
+    const win = ctx.getWindow()
+    if (!win || win.isMaximized() || typeof width !== 'number' || !Number.isFinite(width)) return
+    const bounds = win.getBounds()
+    const target = Math.max(bounds.width, Math.min(Math.round(width), 1400))
+    if (target <= bounds.width) return
+    const { workArea } = screen.getDisplayMatching(bounds)
+    let x = bounds.x
+    if (x + target > workArea.x + workArea.width) {
+      x = Math.max(workArea.x, workArea.x + workArea.width - target)
+    }
+    win.setBounds({ x, y: bounds.y, width: target, height: bounds.height })
+  })
 }

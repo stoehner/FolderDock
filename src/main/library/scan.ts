@@ -1,6 +1,6 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { looksBinary } from '../../shared/excerpt'
+import { looksBinary } from './binary'
 import { extOf, kindForExt } from '../../shared/kinds'
 import { UNSORTED, type FileMeta, type FolderSnapshot, type LibrarySnapshot } from '../../shared/types'
 import { isTempName } from './validate'
