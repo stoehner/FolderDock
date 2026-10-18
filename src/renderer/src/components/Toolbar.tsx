@@ -1,4 +1,3 @@
-import { tailPath } from '../lib/api'
 import { ico } from '../lib/icons'
 import { useLibrary } from '../state/library'
 import { useUI, type FilterKind } from '../state/ui'
@@ -13,45 +12,20 @@ const FILTERS: { id: FilterKind; label: string }[] = [
 ]
 
 export function Toolbar() {
-  const theme = useUI(s => s.theme)
   const search = useUI(s => s.search)
   const filter = useUI(s => s.filter)
-  const toggleTheme = useUI(s => s.toggleTheme)
   const setSearch = useUI(s => s.setSearch)
   const setFilter = useUI(s => s.setFilter)
   const openModal = useUI(s => s.openModal)
   const snapshot = useLibrary(s => s.snapshot)
 
   const folders = snapshot?.folders.length ?? 0
-  const files = snapshot?.folders.reduce((a, f) => a + f.files.length, 0) ?? 0
   const root = snapshot?.root ?? ''
 
   return (
     <div className="toolbar">
-      <div className="toolbar-kicker">YOUR PERSONAL LIBRARY</div>
-      <div className="heading-row">
-        <div style={{ minWidth: 0 }}>
-          <h1>Everything, in reach.</h1>
-          <p id="summary" title={root}>
-            {folders} collections · {files} files · {tailPath(root)}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="toolbar-round"
-            onClick={() => openModal({ type: 'settings' })}
-            title="Settings"
-            aria-label="Open settings"
-          >
-            {ico('gear')}
-          </button>
-          <button className="toolbar-round" onClick={toggleTheme} title="Switch appearance" aria-label="Switch light/dark appearance">
-            {ico(theme === 'dark' ? 'sun' : 'moon')}
-          </button>
-        </div>
-      </div>
       <div className="actionbar">
-        <label className="search">
+        <label className="search" title={root}>
           {ico('search')}
           <input
             id="searchInput"

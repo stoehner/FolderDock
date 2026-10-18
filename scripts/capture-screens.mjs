@@ -49,8 +49,7 @@ await page.locator('.file-row', { hasText: 'UI Critique' }).click()
 await page.waitForTimeout(900)
 await page.screenshot({ path: path.join(outDir, '04-dark-side-preview.png') })
 
-const editorBtn = page.locator('.side-preview .primary-button', { hasText: 'Edit' })
-await editorBtn.click()
+await page.locator('.side-preview .primary-button', { hasText: 'Edit' }).click()
 await page.waitForTimeout(500)
 await page.screenshot({ path: path.join(outDir, '06-editor.png') })
 
@@ -59,9 +58,16 @@ await page.waitForTimeout(300)
 await page.keyboard.press('Escape')
 await page.waitForTimeout(400)
 
-await page.locator('.toolbar-round[aria-label="Switch light/dark appearance"]').click()
-await page.waitForTimeout(500)
+await page.locator('.footer [aria-label="Open settings"]').click()
+await page.waitForTimeout(400)
+await page.locator('.theme-choice', { hasText: 'Light' }).click()
+await page.locator('.modal-foot .primary-button').click()
+await page.waitForTimeout(600)
 await page.screenshot({ path: path.join(outDir, '05-light-preview.png') })
+
+await page.locator('[data-folder="Prompts"] .folder-scene').click({ button: 'right' })
+await page.waitForTimeout(400)
+await page.screenshot({ path: path.join(outDir, '08-light-context-menu.png') })
 
 await app.close()
 await fsp.rm(root, { recursive: true, force: true }).catch(() => undefined)

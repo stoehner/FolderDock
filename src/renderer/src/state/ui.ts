@@ -18,6 +18,7 @@ export type Modal =
       onConfirm: () => Promise<void> | void
     }
   | { type: 'move-file'; relPath: string }
+  | { type: 'recolor-folder'; folder: string }
   | { type: 'help' }
   | { type: 'settings' }
   | { type: 'editor'; relPath: string }

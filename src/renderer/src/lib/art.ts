@@ -34,8 +34,12 @@ export const ART_CYCLE = ['aurora', 'ember', 'dusk', 'glacier', 'verdant', 'slat
 
 const FALLBACK_ART: ArtStyle = { tab: '#687b90', art: 'linear-gradient(115deg,#a1adb8 5%,#5b6e81 34%,#2e4256 60%,#82949d 97%)' }
 
+export function artIdFor(name: string, override?: string): string {
+  return override ?? ART_CYCLE[hashName(name) % ART_CYCLE.length] ?? 'slate'
+}
+
 export function artFor(name: string, override?: string): ArtStyle {
-  const id = override ?? ART_CYCLE[hashName(name) % ART_CYCLE.length] ?? 'slate'
+  const id = artIdFor(name, override)
   return artStyles[id] ?? FALLBACK_ART
 }
 function hashName(name: string): number {

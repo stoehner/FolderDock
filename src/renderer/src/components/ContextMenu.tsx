@@ -86,6 +86,11 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
     const items: Item[] = [
       { label: 'New note', icon: 'plus', run: () => void createNoteOp(menu.folder) },
       { label: 'Import files…', icon: 'upload', run: () => void chooseImportOp(menu.folder) },
+      {
+        label: 'Change color…',
+        icon: 'palette',
+        run: () => useUI.getState().openModal({ type: 'recolor-folder', folder: menu.folder })
+      },
       { label: 'Reveal in File Explorer', icon: 'folder', run: () => (isVirtual ? void api.openRoot().catch(() => undefined) : void revealOp(menu.folder)) }
     ]
     if (!isVirtual) {

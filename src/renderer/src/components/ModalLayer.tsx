@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { artStyles, ART_CYCLE } from '../lib/art'
+import { artStyles, artIdFor, ART_CYCLE } from '../lib/art'
 import { ico } from '../lib/icons'
 import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
@@ -71,6 +71,8 @@ function renderModal(modal: NonNullable<ReturnType<typeof useUI.getState>['modal
       return <ConfirmModal modal={modal} />
     case 'move-file':
       return <MoveFileModal relPath={modal.relPath} />
+    case 'recolor-folder':
+      return <RecolorFolderModal folder={modal.folder} />
     case 'help':
       return <HelpModal />
     case 'settings':
@@ -284,6 +286,42 @@ function MoveFileModal({ relPath }: { relPath: string }) {
         </div>
         <p className="helper">Files move between collections with a real file system move.</p>
       </div>
+    </section>
+  )
+}
+
+function RecolorFolderModal({ folder }: { folder: string }) {
+  const folderArt = useUI(s => s.folderArt)
+  const setFolderArt = useUI(s => s.setFolderArt)
+  const currentId = folderArt[folder] ?? artIdFor(folder)
+  return (
+    <section className="modal" role="dialog" aria-modal="true" aria-label="Change folder color">
+      <Head
+        icon="palette"
+        title="Change folder color"
+        sub={`Live preview — pick a style for “${folder}”.`}
+        onClose={() => useUI.getState().closeModal()}
+      />
+      <div className="modal-content">
+        <div className="colors" style={{ marginTop: 0 }}>
+          {ART_CYCLE.map(id => (
+            <button
+              key={id}
+              className={`swatch${currentId === id ? ' selected' : ''}`}
+              style={{ background: artStyles[id]?.art }}
+              onClick={() => setFolderArt(folder, id)}
+              title={id}
+              aria-label={`Art style ${id}`}
+            />
+          ))}
+        </div>
+        <p className="helper">Colors are saved instantly and only affect how FolderDock displays the collection.</p>
+      </div>
+      <Foot>
+        <button className="primary-button" onClick={() => useUI.getState().closeModal()}>
+          Done
+        </button>
+      </Foot>
     </section>
   )
 }

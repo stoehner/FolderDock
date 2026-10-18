@@ -49,6 +49,11 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
           promptDeleteFile(file.relPath, file.name)
         }
       }}
+      onContextMenu={e => {
+        e.preventDefault()
+        e.stopPropagation()
+        openMenu({ kind: 'file', relPath: file.relPath, x: e.clientX, y: e.clientY })
+      }}
       onDragStart={e => {
         e.preventDefault()
         api.startDrag(file.relPath)

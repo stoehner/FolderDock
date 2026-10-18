@@ -231,17 +231,65 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('theme toggle persists to prefs', async () => {
+  test('theme changes from settings and persists to prefs', async () => {
     const world = await launch()
     try {
-      await world.page.locator('.toolbar-round[aria-label="Switch light/dark appearance"]').click()
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Light' }).click()
       await expect(world.page.locator('body.light')).toHaveCount(1)
+      await settings.locator('.modal-foot .primary-button').click()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
       await expect
         .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"theme": "light"'), {
           timeout: 5000
         })
         .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('right-click on a folder opens its context menu with recolor and rename', async () => {
+    const world = await launch({ 'A/doc.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      await card.locator('.folder-scene').click({ button: 'right' })
+      const menu = world.page.locator('.context-menu')
+      await expect(menu).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Change color' })).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Rename collection' })).toBeVisible()
+      await menu.locator('button', { hasText: 'Change color' }).click()
+      const modal = world.page.locator('.modal')
+      await expect(modal).toBeVisible()
+      await modal.locator('.swatch').nth(1).click()
+      await modal.locator('.modal-foot .primary-button').click()
+      await expect(modal).toBeHidden()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () =>
+            fsSync.existsSync(prefsFile) &&
+            /"folderArt"[\s\S]*?"A"\s*:\s*"[a-z]+"/.test(fsSync.readFileSync(prefsFile, 'utf8')),
+          { timeout: 5000 }
+        )
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('right-click on a file row opens the file context menu', async () => {
+    const world = await launch({ 'A/doc.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      await card.locator('.folder-scene').click()
+      await card.locator('.file-row', { hasText: 'doc.md' }).click({ button: 'right' })
+      const menu = world.page.locator('.context-menu')
+      await expect(menu).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Preview' })).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Rename' })).toBeVisible()
     } finally {
       await close(world)
     }

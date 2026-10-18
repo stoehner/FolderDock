@@ -195,6 +195,10 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onContextMenu={e => {
+        e.preventDefault()
+        openMenu({ kind: 'folder', folder: folder.name, x: e.clientX, y: e.clientY })
+      }}
     >
       <div
         className={`folder-scene leaf-count-${Math.min(3, folder.shown.length)}`}

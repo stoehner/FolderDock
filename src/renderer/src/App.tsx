@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { api } from './lib/api'
+import { ico } from './lib/icons'
 import { useLibrary } from './state/library'
 import { useUI } from './state/ui'
 import { Titlebar } from './components/Titlebar'
@@ -132,6 +133,15 @@ export default function App() {
           <span>·</span>
           <button onClick={() => useUI.getState().openModal({ type: 'help' })} title="See keyboard shortcuts and how it works">
             How it works
+          </button>
+          <span>·</span>
+          <button
+            className="footer-icon"
+            onClick={() => useUI.getState().openModal({ type: 'settings' })}
+            title="Settings"
+            aria-label="Open settings"
+          >
+            {ico('gear')}
           </button>
         </div>
       </footer>
