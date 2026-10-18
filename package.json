@@ -19,7 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "icons": "node scripts/gen-icons.mjs",
+    "icons": "node scripts/gen-icons.mjs && node scripts/gen-icon-from-image.mjs",
     "dist": "npm run build && electron-builder --win",
     "dist:dir": "npm run build && electron-builder --win --dir"
   },
