@@ -60,7 +60,9 @@ const entries = sizes.map(size => {
   const resized = resizePremultiplied(canvas, side, size)
   const png = encodePng(size, size, resized)
   if (size === 16 || size === 256) {
-    fsSync.writeFileSync(path.join(root, 'desktop-capture', `icon-${size}.png`), png)
+    const debugDir = path.join(root, 'desktop-capture')
+    fsSync.mkdirSync(debugDir, { recursive: true })
+    fsSync.writeFileSync(path.join(debugDir, `icon-${size}.png`), png)
   }
   console.log(`  ${size}x${size}: ${png.length} bytes`)
   return { size, png }
