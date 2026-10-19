@@ -16,6 +16,7 @@ export type Modal =
       description: string
       confirmLabel: string
       onConfirm: () => Promise<void> | void
+      onCancel?: () => void
     }
   | { type: 'move-file'; relPath: string }
   | { type: 'move-files'; relPaths: string[] }
@@ -269,10 +270,14 @@ export const useUI = create<UIState>((set, get) => ({
 
   rekeyFolder: (oldName, newName) => {
     const s = get()
+    const remap = (p: string): string =>
+      p === oldName || p.startsWith(`${oldName}/`) ? `${newName}${p.slice(oldName.length)}` : p
     set({
       folderOrder: s.folderOrder.map(n => (n === oldName ? newName : n)),
       folderArt: Object.fromEntries(Object.entries(s.folderArt).map(([k, v]) => [k === oldName ? newName : k, v])),
-      openFolder: s.openFolder === oldName ? newName : s.openFolder
+      openFolder: s.openFolder === oldName ? newName : s.openFolder,
+      starred: s.starred.map(remap),
+      selection: s.selection.map(remap)
     })
     schedulePersist()
   },

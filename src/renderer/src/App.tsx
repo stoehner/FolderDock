@@ -12,7 +12,7 @@ import { SidePreview } from './components/SidePreview'
 import { HoverSummary } from './components/HoverSummary'
 import { DropHint, Toast } from './components/Toast'
 import { SelectionBar } from './components/SelectionBar'
-import { createNoteOp, chooseImportOp, dropBackgroundOp, saveEditorOp } from './lib/ops'
+import { createNoteOp, chooseImportOp, dropBackgroundOp, requestCloseEditor, saveEditorOp } from './lib/ops'
 
 export default function App() {
   const booted = useUI(s => s.booted)
@@ -35,7 +35,8 @@ export default function App() {
       const ctrl = e.ctrlKey || e.metaKey
       if (e.key === 'Escape') {
         if (ui.modal) {
-          if (ui.modal.type === 'editor') ui.closeEditor()
+          if (ui.modal.type === 'editor') requestCloseEditor()
+          else if (ui.modal.type === 'confirm' && ui.modal.onCancel) ui.modal.onCancel()
           else ui.closeModal()
           return
         }

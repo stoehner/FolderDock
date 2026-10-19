@@ -566,6 +566,26 @@ test.describe('FolderDock app', () => {
     }
   })
 
+  test('editor guards unsaved changes on close', async () => {
+    const world = await launch({ 'A/note.md': 'original' })
+    try {
+      const a = world.page.locator('[data-folder="A"]')
+      await a.locator('.folder-scene').click()
+      await a.locator('.file-row', { hasText: 'note.md' }).dblclick()
+      const editor = world.page.locator('.editor-modal')
+      await expect(editor).toBeVisible()
+      await editor.locator('.editor-textarea').fill('changed content')
+      await editor.locator('.exit').click()
+      const confirmModal = world.page.locator('.modal', { hasText: 'Discard unsaved changes?' })
+      await expect(confirmModal).toBeVisible()
+      await confirmModal.locator('.modal-foot .primary-button').click()
+      await expect(editor).toBeHidden()
+      expect(fsSync.readFileSync(path.join(world.root, 'A', 'note.md'), 'utf8')).toBe('original')
+    } finally {
+      await close(world)
+    }
+  })
+
   test('right-click on a folder opens its context menu with recolor and rename', async () => {
     const world = await launch({ 'A/doc.md': 'x' })
     try {

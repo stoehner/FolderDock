@@ -1,4 +1,4 @@
-import { BrowserWindow, app, shell } from 'electron'
+import { BrowserWindow, app, screen, shell } from 'electron'
 import path from 'node:path'
 import type { PrefsStore } from './store'
 
@@ -7,14 +7,28 @@ export interface WindowDeps {
   isQuitting: () => boolean
 }
 
+function boundsTouchAScreen(x: number | undefined, y: number | undefined, width: number, height: number): boolean {
+  if (x === undefined || y === undefined) return false
+  return screen.getAllDisplays().some(d => {
+    const { workArea } = d
+    return (
+      x + width > workArea.x + 8 &&
+      x < workArea.x + workArea.width - 8 &&
+      y + height > workArea.y + 8 &&
+      y < workArea.y + workArea.height - 8
+    )
+  })
+}
+
 export function createWindow(deps: WindowDeps): BrowserWindow {
   const prefs = deps.prefs.get()
   const bounds = prefs.windowBounds
+  const restoreXY = bounds ? boundsTouchAScreen(bounds.x, bounds.y, bounds.width, bounds.height) : false
   const win = new BrowserWindow({
     width: bounds?.width ?? 660,
     height: bounds?.height ?? 890,
-    x: bounds?.x,
-    y: bounds?.y,
+    x: restoreXY ? bounds?.x : undefined,
+    y: restoreXY ? bounds?.y : undefined,
     minWidth: 430,
     minHeight: 580,
     frame: false,

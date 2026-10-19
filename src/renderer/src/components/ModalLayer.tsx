@@ -239,6 +239,10 @@ function ConfirmModal({
   modal: Extract<NonNullable<ReturnType<typeof useUI.getState>['modal']>, { type: 'confirm' }>
 }) {
   const [busy, setBusy] = useState(false)
+  const cancel = (): void => {
+    if (modal.onCancel) modal.onCancel()
+    else useUI.getState().closeModal()
+  }
   async function confirm() {
     if (busy) return
     setBusy(true)
@@ -247,7 +251,7 @@ function ConfirmModal({
   }
   return (
     <section className="modal" role="dialog" aria-modal="true" aria-label={modal.title}>
-      <Head icon="trash" title={modal.title} sub={modal.subtitle} onClose={() => useUI.getState().closeModal()} />
+      <Head icon="trash" title={modal.title} sub={modal.subtitle} onClose={cancel} />
       <div className="modal-content">
         <p className="helper">{modal.description}</p>
       </div>

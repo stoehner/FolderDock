@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { isTextKind, kindForExt } from '../../../shared/kinds'
-import { api, errText } from '../lib/api'
+import { api } from '../lib/api'
 import { ico } from '../lib/icons'
 import { useUI, type ContextMenu as ContextMenuState } from '../state/ui'
 import { useLibrary } from '../state/library'
@@ -123,12 +123,4 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
   }
   items.push({ label: 'Delete file', icon: 'trash', danger: true, run: () => promptDeleteFile(relPath, name) })
   return items
-}
-
-export async function revealRoot(): Promise<void> {
-  try {
-    await api.openRoot()
-  } catch (e) {
-    useUI.getState().notify(errText(e), 'error')
-  }
 }

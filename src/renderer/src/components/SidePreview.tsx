@@ -24,7 +24,9 @@ export function SidePreview() {
   const openEditor = useUI(s => s.openEditor)
   const snapshot = useLibrary(s => s.snapshot)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
-  const kind = kindForExt(relPath?.includes('.') ? relPath.slice(relPath.lastIndexOf('.')) : '')
+  const fileMeta =
+    relPath && snapshot ? snapshot.folders.flatMap(f => f.files).find(f2 => f2.relPath === relPath) : undefined
+  const kind = fileMeta?.kind ?? kindForExt(relPath?.includes('.') ? relPath.slice(relPath.lastIndexOf('.')) : '')
   const meta = useExcerpts(s => (relPath ? s.metas[relPath] : undefined))
   useEffect(() => {
     if (relPath && isImageKind(kind)) useExcerpts.getState().ensureMeta(relPath)

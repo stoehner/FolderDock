@@ -109,6 +109,15 @@ export function LibraryGrid() {
     }
   }, [search, snapshot])
 
+  useEffect(() => {
+    const selection = useUI.getState().selection
+    if (selection.length === 0 || !snapshot) return
+    const known = new Set(snapshot.folders.flatMap(f => f.files.map(file => file.relPath)))
+    if (selection.some(p => !known.has(p))) {
+      useUI.getState().clearSelection()
+    }
+  }, [snapshot])
+
   const folders = useMemo(
     () =>
       snapshot

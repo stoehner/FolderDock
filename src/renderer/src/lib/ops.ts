@@ -285,6 +285,25 @@ export async function copyTextOp(relPath: string): Promise<void> {
   }
 }
 
+export function requestCloseEditor(): void {
+  const ui = useUI.getState()
+  const ed = ui.editor
+  if (!ed) return
+  if (ed.content === ed.savedContent) {
+    ui.closeEditor()
+    return
+  }
+  ui.openModal({
+    type: 'confirm',
+    title: 'Discard unsaved changes?',
+    subtitle: ed.name,
+    description: 'The editor has changes that have not been saved to disk. Discarding keeps the file on disk unchanged.',
+    confirmLabel: 'Discard changes',
+    onConfirm: () => useUI.getState().closeEditor(),
+    onCancel: () => useUI.getState().openModal({ type: 'editor', relPath: ed.relPath })
+  })
+}
+
 export function promptDeleteFile(relPath: string, name: string): void {
   if (!useUI.getState().confirmDelete) {
     void deleteFileOp(relPath)

@@ -55,6 +55,13 @@ describe('resolveWithinRoot', () => {
   it('normalizes sneaky inner traversal that stays inside', () => {
     expect(resolveWithinRoot(root, 'Notes/../Notes/a.md')).toBe(path.resolve(root, 'Notes/a.md'))
   })
+  it('allows file names that merely start with dots', () => {
+    expect(resolveWithinRoot(root, 'Notes/..scratch.md')).toBe(path.resolve(root, 'Notes', '..scratch.md'))
+  })
+  it('still rejects traversal segments after the change', () => {
+    expect(resolveWithinRoot(root, '../outside.md')).toBeNull()
+    expect(resolveWithinRoot(root, 'Notes/../../outside.md')).toBeNull()
+  })
 })
 
 describe('toRelPath', () => {

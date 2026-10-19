@@ -23,6 +23,15 @@ export function firstHeading(content: string): string | null {
   return h ? h.trim() : null
 }
 
+export function indexOfInsensitive(text: string, query: string): number {
+  const lowerText = text.toLowerCase()
+  if (lowerText.length === text.length) return lowerText.indexOf(query)
+  for (let i = 0; i + query.length <= text.length; i++) {
+    if (text.slice(i, i + query.length).toLowerCase() === query) return i
+  }
+  return -1
+}
+
 export function matchSnippet(text: string, matchStart: number, matchLen: number, radius = 48): string {
   const start = Math.max(0, matchStart - radius)
   const end = Math.min(text.length, matchStart + matchLen + radius)

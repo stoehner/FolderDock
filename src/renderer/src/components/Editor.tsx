@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { ico } from '../lib/icons'
 import { useUI } from '../state/ui'
-import { overwriteEditorOp, reloadEditorOp, saveEditorOp } from '../lib/ops'
+import { overwriteEditorOp, reloadEditorOp, requestCloseEditor, saveEditorOp } from '../lib/ops'
 import { renderMarkdown } from '../lib/markdown'
 export function EditorModal() {
   const editor = useUI(s => s.editor)
   const setEditorContent = useUI(s => s.setEditorContent)
   const setEditorName = useUI(s => s.setEditorName)
   const setEditorTab = useUI(s => s.setEditorTab)
-  const closeEditor = useUI(s => s.closeEditor)
   const taRef = useRef<HTMLTextAreaElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -46,7 +45,7 @@ export function EditorModal() {
           <strong>{dirty ? 'Edit document — unsaved changes' : 'Edit document'}</strong>
           <p>{editor.relPath}</p>
         </div>
-        <button className="exit" onClick={closeEditor} aria-label="Close editor">
+        <button className="exit" onClick={requestCloseEditor} aria-label="Close editor">
           {ico('x')}
         </button>
       </div>
@@ -107,7 +106,7 @@ export function EditorModal() {
         <button className="secondary-button" onClick={() => void reloadEditorOp()} title="Discard your edits and load the file from disk">
           Reload from disk
         </button>
-        <button className="secondary-button" onClick={closeEditor}>
+        <button className="secondary-button" onClick={requestCloseEditor}>
           {dirty ? 'Discard' : 'Close'}
         </button>
         <button className="primary-button" onClick={() => void save()}>

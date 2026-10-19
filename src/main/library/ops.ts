@@ -2,7 +2,7 @@ import { shell } from 'electron'
 import fsSync from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { extractExcerpt, matchSnippet } from '../../shared/excerpt'
+import { extractExcerpt, indexOfInsensitive, matchSnippet } from '../../shared/excerpt'
 import { looksBinary } from './binary'
 import { extOf, isTextKind, kindForExt } from '../../shared/kinds'
 import {
@@ -171,7 +171,7 @@ export async function searchContent(root: string, rawQuery: string): Promise<Con
     if (!abs) continue
     try {
       const text = await fsp.readFile(abs, 'utf8')
-      const idx = text.toLowerCase().indexOf(query)
+      const idx = indexOfInsensitive(text, query)
       if (idx >= 0) {
         matches.push({ relPath: file.relPath, snippet: matchSnippet(text, idx, query.length) })
       }

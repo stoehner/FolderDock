@@ -42,7 +42,7 @@ export function resolveWithinRoot(root: string, relPath: string): string | null 
   if (typeof relPath !== 'string' || !relPath.trim()) return null
   const abs = path.resolve(root, relPath)
   const rel = path.relative(root, abs)
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null
+  if (!rel || path.isAbsolute(rel)) return null
   if (rel.split(path.sep).some(seg => seg === '..' || seg === '.')) return null
   return abs
 }

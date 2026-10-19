@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractExcerpt, firstHeading, matchSnippet } from './excerpt'
+import { extractExcerpt, firstHeading, indexOfInsensitive, matchSnippet } from './excerpt'
 import { DEFAULT_PREFS, mergePrefs, prunePrefs } from './prefs'
 import { kindForExt, extOf } from './kinds'
 import { compareFiles } from './sort'
@@ -34,6 +34,21 @@ describe('firstHeading', () => {
   })
   it('returns null when absent', () => {
     expect(firstHeading('no headings')).toBeNull()
+  })
+})
+
+describe('indexOfInsensitive', () => {
+  it('finds case-insensitive matches with aligned indices', () => {
+    expect(indexOfInsensitive('Find the Needle here', 'needle')).toBe(9)
+  })
+  it('returns -1 when absent', () => {
+    expect(indexOfInsensitive('nothing', 'zzz')).toBe(-1)
+  })
+  it('keeps indices correct when lowercasing changes string length', () => {
+    const text = 'İstanbul notes'
+    const idx = indexOfInsensitive(text, 'notes')
+    expect(idx).toBe(9)
+    expect(text.slice(idx, idx + 5)).toBe('notes')
   })
 })
 
