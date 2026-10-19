@@ -2,11 +2,12 @@ import { shell } from 'electron'
 import fsSync from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { extractExcerpt } from '../../shared/excerpt'
+import { extractExcerpt, matchSnippet } from '../../shared/excerpt'
 import { looksBinary } from './binary'
 import { extOf, isTextKind, kindForExt } from '../../shared/kinds'
 import {
   UNSORTED,
+  type ContentMatch,
   type DetailedFileMeta,
   type ImportResult,
   type LibrarySnapshot,
@@ -27,6 +28,8 @@ import {
 
 const MAX_TEXT_BYTES = 2 * 1024 * 1024
 const MAX_IMPORT_BYTES = 200 * 1024 * 1024
+const MAX_CONTENT_SEARCH_BYTES = 512 * 1024
+const MAX_CONTENT_MATCHES = 100
 
 function requireWithin(root: string, relPath: string): string {
   const abs = resolveWithinRoot(root, relPath)
@@ -152,6 +155,31 @@ export async function readBytes(root: string, relPath: string, maxBytes: number)
   const out = new ArrayBuffer(buf.byteLength)
   new Uint8Array(out).set(buf)
   return out
+}
+
+export async function searchContent(root: string, rawQuery: string): Promise<ContentMatch[]> {
+  const query = rawQuery.trim().toLowerCase()
+  if (query.length < 2) return []
+  const snap = await scanLibrary(root)
+  const candidates = snap.folders
+    .flatMap(f => f.files)
+    .filter(f => isTextKind(f.kind) && !f.binary && f.size <= MAX_CONTENT_SEARCH_BYTES)
+  const matches: ContentMatch[] = []
+  for (const file of candidates) {
+    if (matches.length >= MAX_CONTENT_MATCHES) break
+    const abs = resolveWithinRoot(root, file.relPath)
+    if (!abs) continue
+    try {
+      const text = await fsp.readFile(abs, 'utf8')
+      const idx = text.toLowerCase().indexOf(query)
+      if (idx >= 0) {
+        matches.push({ relPath: file.relPath, snippet: matchSnippet(text, idx, query.length) })
+      }
+    } catch {
+      /* unreadable files are skipped */
+    }
+  }
+  return matches
 }
 
 export async function excerptFor(root: string, relPath: string): Promise<string> {

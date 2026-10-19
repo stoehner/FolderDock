@@ -8,7 +8,8 @@ const FILTERS: { id: FilterKind; label: string }[] = [
   { id: 'markdown', label: 'Markdown' },
   { id: 'image', label: 'Images' },
   { id: 'pdf', label: 'PDFs' },
-  { id: 'favorites', label: 'Starred' }
+  { id: 'favorites', label: 'Starred' },
+  { id: 'recent', label: 'Recent' }
 ]
 
 export function Toolbar() {
@@ -29,7 +30,7 @@ export function Toolbar() {
           {ico('search')}
           <input
             id="searchInput"
-            placeholder="Search folders and files..."
+            placeholder="Search names and file contents..."
             autoComplete="off"
             aria-label="Search folders and files"
             value={search}

@@ -77,6 +77,38 @@ export async function moveFileOp(relPath: string, targetFolder: string): Promise
   }
 }
 
+export async function moveFilesOp(relPaths: string[], targetFolder: string): Promise<void> {
+  const ui = useUI.getState()
+  let moved = 0
+  for (const relPath of relPaths) {
+    try {
+      const snap = await call(api.moveFile(relPath, targetFolder))
+      useLibrary.getState().apply(snap)
+      moved += 1
+    } catch (e) {
+      ui.notify(adoptError(e), 'error')
+    }
+  }
+  ui.closeModal()
+  useUI.getState().clearSelection()
+  if (moved > 0) ui.notify(`${moved} file${moved === 1 ? '' : 's'} moved into ${targetFolder}`)
+}
+
+export async function deleteFilesOp(relPaths: string[]): Promise<void> {
+  const ui = useUI.getState()
+  for (const relPath of relPaths) {
+    try {
+      const snap = await call(api.deleteFile(relPath))
+      useLibrary.getState().apply(snap)
+    } catch (e) {
+      ui.notify(adoptError(e), 'error')
+    }
+  }
+  if (useUI.getState().previewRelPath && relPaths.includes(useUI.getState().previewRelPath ?? '')) ui.closePreview()
+  useUI.getState().clearSelection()
+  ui.notify(`${relPaths.length} file${relPaths.length === 1 ? '' : 's'} moved to the Recycle Bin`)
+}
+
 export async function deleteFileOp(relPath: string): Promise<void> {
   const ui = useUI.getState()
   try {
@@ -254,6 +286,10 @@ export async function copyTextOp(relPath: string): Promise<void> {
 }
 
 export function promptDeleteFile(relPath: string, name: string): void {
+  if (!useUI.getState().confirmDelete) {
+    void deleteFileOp(relPath)
+    return
+  }
   useUI.getState().openModal({
     type: 'confirm',
     title: 'Delete document?',
@@ -264,7 +300,28 @@ export function promptDeleteFile(relPath: string, name: string): void {
   })
 }
 
+export function promptDeleteFiles(relPaths: string[]): void {
+  if (!useUI.getState().confirmDelete) {
+    void deleteFilesOp(relPaths)
+    return
+  }
+  const names = relPaths.map(p => p.split('/').pop() ?? p)
+  const shown = names.slice(0, 3).join(', ')
+  useUI.getState().openModal({
+    type: 'confirm',
+    title: `Delete ${relPaths.length} files?`,
+    subtitle: names.length > 3 ? `${shown}, +${names.length - 3} more` : shown,
+    description: 'These files are moved to the Windows Recycle Bin. You can restore them there if needed.',
+    confirmLabel: 'Move to Recycle Bin',
+    onConfirm: () => deleteFilesOp(relPaths)
+  })
+}
+
 export function promptDeleteFolder(name: string, fileCount: number): void {
+  if (!useUI.getState().confirmDelete) {
+    void deleteFolderOp(name)
+    return
+  }
   useUI.getState().openModal({
     type: 'confirm',
     title: 'Delete collection?',

@@ -1,6 +1,12 @@
 export type FileKind = 'markdown' | 'text' | 'image' | 'pdf' | 'other'
 
-export type Theme = 'dark' | 'light'
+export type Theme = 'dark' | 'light' | 'system'
+
+export type ViewSize = 'regular' | 'compact'
+
+export type FileSort = 'recent' | 'name' | 'size'
+
+export type HoverDelay = 'fast' | 'normal' | 'slow'
 
 export interface FileMeta {
   relPath: string
@@ -40,6 +46,12 @@ export interface Prefs {
   folderArt: Record<string, string>
   starred: string[]
   openFolder: string | null
+  alwaysOnTop: boolean
+  viewSize: ViewSize
+  fileSort: FileSort
+  closeToTray: boolean
+  confirmDelete: boolean
+  hoverDelay: HoverDelay
 }
 
 export interface TextFileContent {
@@ -65,6 +77,11 @@ export interface ImportResult {
   imported: { name: string; relPath: string }[]
   moved: { name: string; relPath: string }[]
   skipped: { name: string; reason: string }[]
+}
+
+export interface ContentMatch {
+  relPath: string
+  snippet: string
 }
 
 export interface DetailedFileMeta extends FileMeta {

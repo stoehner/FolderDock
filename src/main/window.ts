@@ -4,6 +4,7 @@ import type { PrefsStore } from './store'
 
 export interface WindowDeps {
   prefs: PrefsStore
+  isQuitting: () => boolean
 }
 
 export function createWindow(deps: WindowDeps): BrowserWindow {
@@ -31,17 +32,32 @@ export function createWindow(deps: WindowDeps): BrowserWindow {
 
   win.once('ready-to-show', () => win.show())
   if (bounds?.maximized) win.maximize()
+  if (prefs.alwaysOnTop) win.setAlwaysOnTop(true, 'screen-saver')
 
   const sendMaximized = (): void => {
     void win.webContents.send('window:maximized', win.isMaximized())
   }
-  win.on('maximize', sendMaximized)
-  win.on('unmaximize', sendMaximized)
+  const persistBounds = (): void => {
+    deps.prefs.patch({ windowBounds: { ...win.getNormalBounds(), maximized: win.isMaximized() } })
+  }
+  win.on('maximize', () => {
+    sendMaximized()
+    persistBounds()
+  })
+  win.on('unmaximize', () => {
+    sendMaximized()
+    persistBounds()
+  })
+  win.on('resize', persistBounds)
+  win.on('move', persistBounds)
 
-  win.on('close', () => {
-    deps.prefs.patch({
-      windowBounds: { ...win.getNormalBounds(), maximized: win.isMaximized() }
-    })
+  win.on('close', event => {
+    if (deps.prefs.get().closeToTray && !deps.isQuitting()) {
+      event.preventDefault()
+      win.hide()
+      return
+    }
+    persistBounds()
   })
 
   win.webContents.setWindowOpenHandler(({ url }) => {

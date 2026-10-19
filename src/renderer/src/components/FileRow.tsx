@@ -2,7 +2,7 @@ import type { FileMeta } from '../../../shared/types'
 import { api, formatSize } from '../lib/api'
 import { ico } from '../lib/icons'
 import { useUI } from '../state/ui'
-import { promptDeleteFile } from '../lib/ops'
+import { promptDeleteFile, promptDeleteFiles } from '../lib/ops'
 
 function iconFor(file: FileMeta): string {
   if (file.kind === 'image') return 'image'
@@ -22,17 +22,26 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
   const openEditor = useUI(s => s.openEditor)
   const openMenu = useUI(s => s.openMenu)
   const isStarred = useUI(s => s.starred.includes(file.relPath))
+  const snippet = useUI(s => s.contentMatches[file.relPath])
+  const inSelection = useUI(s => s.selection.includes(file.relPath))
+  const selection = useUI(s => s.selection)
 
   return (
     <div
-      className={`file-row${selected ? ' is-selected' : ''}`}
+      className={`file-row${selected || inSelection ? ' is-selected' : ''}`}
       data-file={file.relPath}
       draggable
       tabIndex={0}
       role="button"
       aria-label={`Preview ${file.name}`}
-      title="Drag out or into another collection · click to preview · double-click to edit"
-      onClick={() => openPreview(file.relPath)}
+      title="Drag out or into another collection · click to preview · double-click to edit · Ctrl+click to select"
+      onClick={e => {
+        if (e.ctrlKey || e.metaKey) {
+          useUI.getState().toggleSelect(file.relPath)
+          return
+        }
+        openPreview(file.relPath)
+      }}
       onDoubleClick={e => {
         e.stopPropagation()
         void openEditor(file.relPath)
@@ -46,7 +55,8 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
           useUI.getState().openModal({ type: 'rename-file', relPath: file.relPath })
         } else if (e.key === 'Delete') {
           e.preventDefault()
-          promptDeleteFile(file.relPath, file.name)
+          if (inSelection && selection.length > 1) promptDeleteFiles([...selection])
+          else promptDeleteFile(file.relPath, file.name)
         }
       }}
       onContextMenu={e => {
@@ -56,7 +66,8 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
       }}
       onDragStart={e => {
         e.preventDefault()
-        api.startDrag(file.relPath)
+        const others = inSelection && selection.length > 1 ? selection.filter(p => p !== file.relPath) : undefined
+        api.startDrag(file.relPath, others)
       }}
     >
       <span className={`typeicon ${kindClass(file)}`}>{ico(iconFor(file))}</span>
@@ -68,6 +79,7 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
         <div className="file-meta">
           {formatSize(file.size)} · {new Date(file.mtimeMs).toLocaleDateString()}
         </div>
+        {snippet ? <div className="file-snippet">{snippet}</div> : null}
       </div>
       <button
         className="file-more"

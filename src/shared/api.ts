@@ -1,4 +1,5 @@
 import type {
+  ContentMatch,
   DetailedFileMeta,
   ImportResult,
   LibrarySnapshot,
@@ -12,6 +13,7 @@ import type {
 export interface FolderDockBridge {
   appInfo(): Promise<IPCResult<{ version: string; electron: string; root: string; overridden: boolean; defaultRoot: string | null }>>
   scan(): Promise<IPCResult<LibrarySnapshot>>
+  searchContent(query: string): Promise<IPCResult<ContentMatch[]>>
   createFolder(name: string): Promise<IPCResult<LibrarySnapshot>>
   renameFolder(oldName: string, newName: string): Promise<IPCResult<LibrarySnapshot>>
   deleteFolder(name: string): Promise<IPCResult<LibrarySnapshot>>
@@ -32,7 +34,7 @@ export interface FolderDockBridge {
   chooseRoot(): Promise<IPCResult<string | null>>
   getPrefs(): Promise<IPCResult<Prefs>>
   setPrefs(patch: Partial<Prefs>): Promise<IPCResult<Prefs>>
-  startDrag(relPath: string): void
+  startDrag(relPath: string, additionalFiles?: string[]): void
   minimize(): void
   toggleMaximize(): void
   close(): void

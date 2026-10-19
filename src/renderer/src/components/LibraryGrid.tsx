@@ -1,10 +1,13 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { FileMeta, FolderSnapshot } from '../../../shared/types'
 import { isImageKind } from '../../../shared/kinds'
+import { compareFiles } from '../../../shared/sort'
+import { api, call } from '../lib/api'
 import { artFor } from '../lib/art'
 import { useLibrary } from '../state/library'
 import { useDrag } from '../state/drag'
 import { useUI, type FilterKind } from '../state/ui'
+import type { FileSort } from '../../../shared/types'
 import { FileRow } from './FileRow'
 import { PaperSheet } from './PaperSheet'
 import { chooseImportOp, createNoteOp, importDropOp } from '../lib/ops'
@@ -15,9 +18,12 @@ export interface DisplayFolder extends FolderSnapshot {
   titleMatch: boolean
 }
 
+const RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
 function matchesFilter(file: FileMeta, filter: FilterKind, starred: string[]): boolean {
   if (filter === 'all') return true
   if (filter === 'favorites') return starred.includes(file.relPath)
+  if (filter === 'recent') return Date.now() - file.mtimeMs <= RECENT_WINDOW_MS
   if (filter === 'image') return isImageKind(file.kind)
   return file.kind === filter
 }
@@ -30,6 +36,8 @@ export function computeDisplayFolders(
     folderOrder: string[]
     folderArt: Record<string, string>
     starred: string[]
+    contentMatches: Record<string, string>
+    fileSort: FileSort
   }
 ): DisplayFolder[] {
   const q = opts.search.trim().toLowerCase()
@@ -48,8 +56,14 @@ export function computeDisplayFolders(
     .map(f => {
       const art = artFor(f.name, opts.folderArt[f.name])
       const titleMatch = f.name.toLowerCase().includes(q)
-      const shown = f.files.filter(
-        file => matchesFilter(file, opts.filter, opts.starred) && (!q || titleMatch || file.name.toLowerCase().includes(q))
+      const sorted = [...f.files].sort((a, b) => compareFiles(a, b, opts.fileSort))
+      const shown = sorted.filter(
+        file =>
+          matchesFilter(file, opts.filter, opts.starred) &&
+          (!q ||
+            titleMatch ||
+            file.name.toLowerCase().includes(q) ||
+            opts.contentMatches[file.relPath] !== undefined)
       )
       return { ...f, art, shown, titleMatch }
     })
@@ -64,13 +78,43 @@ export function LibraryGrid() {
   const folderOrder = useUI(s => s.folderOrder)
   const folderArt = useUI(s => s.folderArt)
   const starred = useUI(s => s.starred)
+  const contentMatches = useUI(s => s.contentMatches)
+  const fileSort = useUI(s => s.fileSort)
   const openFolder = useUI(s => s.openFolder)
   const previewRelPath = useUI(s => s.previewRelPath)
   const openModal = useUI(s => s.openModal)
 
+  useEffect(() => {
+    const q = search.trim()
+    if (q.length < 2) {
+      useUI.getState().setContentMatches({})
+      return
+    }
+    let stale = false
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await call(api.searchContent(q))
+          if (!stale) {
+            useUI.getState().setContentMatches(Object.fromEntries(res.map(m => [m.relPath, m.snippet])))
+          }
+        } catch {
+          if (!stale) useUI.getState().setContentMatches({})
+        }
+      })()
+    }, 200)
+    return () => {
+      stale = true
+      clearTimeout(t)
+    }
+  }, [search, snapshot])
+
   const folders = useMemo(
-    () => (snapshot ? computeDisplayFolders(snapshot, { search, filter, folderOrder, folderArt, starred }) : []),
-    [snapshot, search, filter, folderOrder, folderArt, starred]
+    () =>
+      snapshot
+        ? computeDisplayFolders(snapshot, { search, filter, folderOrder, folderArt, starred, contentMatches, fileSort })
+        : [],
+    [snapshot, search, filter, folderOrder, folderArt, starred, contentMatches, fileSort]
   )
 
   if (error) {

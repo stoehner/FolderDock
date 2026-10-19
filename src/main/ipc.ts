@@ -35,6 +35,7 @@ export function registerIpc(ctx: MainContext): void {
   })
 
   handle('library:scan', async () => scanLibrary(ctx.getRoot()))
+  handle('search:content', async (_e, query: string) => ops.searchContent(ctx.getRoot(), query))
 
   handle('folder:create', async (_e, name: string) => ops.createFolder(ctx.getRoot(), name))
   handle('folder:rename', async (_e, oldName: string, newName: string) => ops.renameFolder(ctx.getRoot(), oldName, newName))
@@ -98,6 +99,9 @@ export function registerIpc(ctx: MainContext): void {
   handle('prefs:set', async (_e, patch: Partial<Prefs>) => {
     const before = ctx.prefs.get().rootPath
     const next = ctx.prefs.patch(patch)
+    if (patch.alwaysOnTop !== undefined) {
+      ctx.getWindow()?.setAlwaysOnTop(patch.alwaysOnTop, 'screen-saver')
+    }
     if (patch.rootPath !== undefined && patch.rootPath !== before && !ctx.rootOverridden()) {
       const root = patch.rootPath && patch.rootPath.trim() ? path.resolve(patch.rootPath.trim()) : null
       if (root) {
@@ -112,13 +116,18 @@ export function registerIpc(ctx: MainContext): void {
     ops.createNote(ctx.getRoot(), folderName, baseName)
   )
 
-  ipcMain.on('drag:start', (event, relPath: unknown) => {
+  ipcMain.on('drag:start', (event, relPath: unknown, additional: unknown) => {
     try {
       if (typeof relPath !== 'string') return
-      const abs = resolveWithinRoot(ctx.getRoot(), relPath)
-      if (!abs || !fsSync.existsSync(abs)) return
-      const kind = kindForExt(extOf(path.basename(abs)))
-      event.sender.startDrag({ file: abs, files: [abs], icon: dragIconFor(kind) })
+      const rest =
+        Array.isArray(additional) && additional.every(x => typeof x === 'string') ? additional.filter(x => x !== relPath) : []
+      const absPaths = [relPath, ...rest]
+        .map(p => resolveWithinRoot(ctx.getRoot(), p))
+        .filter((p): p is string => Boolean(p && fsSync.existsSync(p)))
+      const primary = absPaths[0]
+      if (!primary) return
+      const kind = kindForExt(extOf(path.basename(primary)))
+      event.sender.startDrag({ file: primary, files: absPaths, icon: dragIconFor(kind) })
     } catch (err) {
       console.warn('[folderdock] drag:start failed:', err)
     }

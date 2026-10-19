@@ -85,6 +85,9 @@ body.light .file-row:hover {
 body.light .file-row .file-meta {
   color: #60778a;
 }
+body.light .file-row .file-snippet {
+  color: #5a7a90;
+}
 body.light .folder-front {
   background: linear-gradient(175deg, rgba(255, 255, 255, 0.35), rgba(235, 243, 248, 0.5), rgba(86, 108, 125, 0.65));
 }
@@ -310,8 +313,24 @@ body.light .theme-choice.active {
   border-color: #6ea9cd;
   color: #1e4560;
 }
+body.light .settings-toggle {
+  background: #d5e0e8;
+  border-color: #b5c8d4;
+}
+body.light .settings-toggle.on {
+  background: #4f8fba;
+  border-color: #3c779e;
+}
+body.light .settings-toggle-knob {
+  background: #fff;
+}
 body.light .settings-row {
   border-color: #d3dee6;
+}
+body.light .selection-bar {
+  background: #eaf0f5;
+  border-color: #b5c8d4;
+  color: #2c3f4e;
 }
 body.light .settings-row .settings-label {
   color: #2c3f4e;

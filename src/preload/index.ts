@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { FolderDockBridge } from '../shared/api'
 import type {
+  ContentMatch,
   DetailedFileMeta,
   ImportResult,
   LibrarySnapshot,
@@ -17,6 +18,7 @@ type AppInfo = { version: string; electron: string; root: string; overridden: bo
 const api: FolderDockBridge = {
   appInfo: () => ipcRenderer.invoke('app:info') as Promise<IPCResult<AppInfo>>,
   scan: () => ipcRenderer.invoke('library:scan') as Promise<IPCResult<LibrarySnapshot>>,
+  searchContent: (query: string) => ipcRenderer.invoke('search:content', query) as Promise<IPCResult<ContentMatch[]>>,
   createFolder: (name: string) => ipcRenderer.invoke('folder:create', name) as Promise<IPCResult<LibrarySnapshot>>,
   renameFolder: (oldName: string, newName: string) =>
     ipcRenderer.invoke('folder:rename', oldName, newName) as Promise<IPCResult<LibrarySnapshot>>,
@@ -44,7 +46,7 @@ const api: FolderDockBridge = {
   setPrefs: (patch: Partial<Prefs>) => ipcRenderer.invoke('prefs:set', patch) as Promise<IPCResult<Prefs>>,
   createNote: ((folderName: string, baseName?: string) =>
     ipcRenderer.invoke('file:createNote', folderName, baseName) as Promise<IPCResult<NoteResult>>) as FolderDockBridge['createNote'],
-  startDrag: (relPath: string) => ipcRenderer.send('drag:start', relPath),
+  startDrag: (relPath: string, additionalFiles?: string[]) => ipcRenderer.send('drag:start', relPath, additionalFiles),
   minimize: () => ipcRenderer.send('window:minimize'),
   toggleMaximize: () => ipcRenderer.send('window:toggleMaximize'),
   close: () => ipcRenderer.send('window:close'),

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, net, protocol } from 'electron'
+import { app, BrowserWindow, Menu, net, protocol, Tray } from 'electron'
 import fsSync from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -20,8 +20,41 @@ let prefsStore: PrefsStore | null = null
 let mainWindow: BrowserWindow | null = null
 let stopWatcher: (() => void) | null = null
 let currentRoot = ''
+let tray: Tray | null = null
+let quitting = false
 
 const rootOverridden = (): boolean => Boolean(process.env.FOLDERDOCK_ROOT?.trim())
+
+function trayIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'resources', 'icon.ico')
+    : path.join(app.getAppPath(), 'resources', 'icon.ico')
+}
+
+function ensureTray(): void {
+  if (tray) return
+  try {
+    tray = new Tray(trayIconPath())
+    const showWindow = (): void => {
+      const win = mainWindow
+      if (!win) return
+      if (win.isMinimized()) win.restore()
+      if (!win.isVisible()) win.show()
+      win.focus()
+    }
+    tray.setToolTip('FolderDock')
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        { label: 'Open FolderDock', click: showWindow },
+        { type: 'separator' },
+        { label: 'Quit FolderDock', click: () => app.quit() }
+      ])
+    )
+    tray.on('click', showWindow)
+  } catch (err) {
+    console.warn('[folderdock] tray unavailable:', err)
+  }
+}
 
 async function applyRoot(root: string, opts: { seed?: boolean } = {}): Promise<void> {
   currentRoot = root
@@ -91,22 +124,24 @@ if (!gotLock) {
       }
     })
 
-    mainWindow = createWindow({ prefs: prefsStore })
+    mainWindow = createWindow({ prefs: prefsStore, isQuitting: () => quitting })
+    ensureTray()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0 && prefsStore) {
-        mainWindow = createWindow({ prefs: prefsStore })
+        mainWindow = createWindow({ prefs: prefsStore, isQuitting: () => quitting })
       }
     })
   })
 
   app.on('window-all-closed', () => {
-    void prefsStore?.save()
+    prefsStore?.saveSync()
     app.quit()
   })
 
   app.on('before-quit', () => {
-    void prefsStore?.save()
+    quitting = true
+    prefsStore?.saveSync()
     stopWatcher?.()
   })
 }

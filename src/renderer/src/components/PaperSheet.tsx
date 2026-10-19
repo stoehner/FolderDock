@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import type { FileMeta } from '../../../shared/types'
 import { extOf, kindForExt } from '../../../shared/kinds'
-import { api } from '../lib/api'
+import { api, fdfileUrl } from '../lib/api'
 import { useExcerpts } from '../state/excerpts'
+import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
 
 function typeTag(file: FileMeta): string {
@@ -26,11 +27,13 @@ export function PaperSheet({
   selected: boolean
 }) {
   const excerpt = useExcerpts(s => s.texts[file.relPath])
+  const root = useLibrary(s => s.snapshot?.root ?? '')
   const openPreview = useUI(s => s.openPreview)
   const openEditor = useUI(s => s.openEditor)
+  const isImage = file.kind === 'image'
   useEffect(() => {
-    useExcerpts.getState().ensureExcerpt(file.relPath)
-  }, [file.relPath])
+    if (!isImage) useExcerpts.getState().ensureExcerpt(file.relPath)
+  }, [file.relPath, isImage])
   const ext = (extOf(file.name).replace('.', '') || 'FILE').slice(0, 7).toUpperCase()
   const summary = (excerpt ?? '').slice(0, 85)
 
@@ -66,7 +69,13 @@ export function PaperSheet({
         <span className="sheet-ext">{ext}</span>
       </div>
       <div className="sheet-title">{file.name}</div>
-      <div className="sheet-text">{summary || (file.binary ? 'Binary content' : 'Empty file — click to open')}</div>
+      {isImage && root ? (
+        <div className="sheet-thumb">
+          <img src={fdfileUrl(root, file.relPath)} alt="" draggable={false} loading="lazy" />
+        </div>
+      ) : (
+        <div className="sheet-text">{summary || (file.binary ? 'Binary content' : 'Empty file — click to open')}</div>
+      )}
       <span className="sheet-grab">↗ drag</span>
     </div>
   )

@@ -22,3 +22,11 @@ export function firstHeading(content: string): string | null {
   const h = m?.[1]
   return h ? h.trim() : null
 }
+
+export function matchSnippet(text: string, matchStart: number, matchLen: number, radius = 48): string {
+  const start = Math.max(0, matchStart - radius)
+  const end = Math.min(text.length, matchStart + matchLen + radius)
+  const body = text.slice(start, end).replace(/\s+/g, ' ').trim()
+  if (!body) return ''
+  return `${start > 0 ? '…' : ''}${body}${end < text.length ? '…' : ''}`
+}

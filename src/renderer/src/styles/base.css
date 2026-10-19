@@ -341,6 +341,9 @@ svg {
   align-items: start;
   gap: 15px 14px;
 }
+body.compact .library-grid {
+  zoom: 0.84;
+}
 @media (max-width: 560px) {
   .library-grid {
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -353,6 +356,27 @@ svg {
   border: 1px dashed var(--line-strong);
   border-radius: 16px;
   color: #8f9ba7;
+}
+.selection-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 54px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: #18222c;
+  border: 1px solid #3a4b58;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  z-index: 40;
+  font-size: 11px;
+  color: #d7e2ea;
+}
+.selection-bar strong {
+  font-size: 11px;
+  margin-right: 2px;
 }
 .empty h3 {
   color: #e7ebef;

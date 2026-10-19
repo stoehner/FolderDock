@@ -7,7 +7,13 @@ export const DEFAULT_PREFS: Prefs = {
   folderOrder: [],
   folderArt: {},
   starred: [],
-  openFolder: null
+  openFolder: null,
+  alwaysOnTop: false,
+  viewSize: 'regular',
+  fileSort: 'recent',
+  closeToTray: true,
+  confirmDelete: true,
+  hoverDelay: 'normal'
 }
 
 const ART_IDS = new Set(['aurora', 'ember', 'dusk', 'glacier', 'verdant', 'slate'])
@@ -18,7 +24,7 @@ function strArray(v: unknown): string[] {
 
 export function mergePrefs(raw: unknown): Prefs {
   const r = (raw ?? {}) as Record<string, unknown>
-  const theme = r.theme === 'light' ? 'light' : 'dark'
+  const theme = r.theme === 'light' || r.theme === 'system' ? r.theme : 'dark'
   const rootPath = typeof r.rootPath === 'string' && r.rootPath.trim() ? r.rootPath : null
   const wb = (r.windowBounds ?? null) as Record<string, unknown> | null
   const windowBounds =
@@ -44,7 +50,13 @@ export function mergePrefs(raw: unknown): Prefs {
     folderOrder: strArray(r.folderOrder),
     folderArt,
     starred: strArray(r.starred),
-    openFolder
+    openFolder,
+    alwaysOnTop: r.alwaysOnTop === true,
+    viewSize: r.viewSize === 'compact' ? 'compact' : 'regular',
+    fileSort: r.fileSort === 'name' || r.fileSort === 'size' ? r.fileSort : 'recent',
+    closeToTray: r.closeToTray === undefined ? true : r.closeToTray === true,
+    confirmDelete: r.confirmDelete === undefined ? true : r.confirmDelete === true,
+    hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal'
   }
 }
 

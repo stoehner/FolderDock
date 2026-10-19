@@ -187,6 +187,24 @@ test.describe('FolderDock app', () => {
     }
   })
 
+  test('search matches text inside files and shows a snippet', async () => {
+    const world = await launch({
+      'Alpha/plain.md': '# Nothing special here\n\nThe launch checklist lives elsewhere.',
+      'Beta/unrelated.txt': 'grocery list\n\npick up oregano and lightbulbs\n'
+    })
+    try {
+      await world.page.locator('#searchInput').fill('oregano')
+      await expect(world.page.locator('.folder-card')).toHaveCount(1)
+      const beta = world.page.locator('[data-folder="Beta"]')
+      await expect(beta.locator('.file-row', { hasText: 'unrelated.txt' })).toBeVisible()
+      await expect(beta.locator('.file-row .file-snippet')).toContainText('oregano')
+      await world.page.locator('#searchInput').fill('')
+      await expect(world.page.locator('.folder-card')).toHaveCount(2)
+    } finally {
+      await close(world)
+    }
+  })
+
   test('hover summary appears after delay and side preview opens on click', async () => {
     const world = await launch({ 'A/note.md': '# Titled\n\nBody text for the summary tooltip.' })
     try {
@@ -246,6 +264,303 @@ test.describe('FolderDock app', () => {
           timeout: 5000
         })
         .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('always on top setting pins the window and persists across restart', async () => {
+    const world = await launch()
+    let app2: ElectronApplication | null = null
+    try {
+      const isPinned = (app: ElectronApplication) =>
+        app.evaluate(({ BrowserWindow }) => {
+          const win = BrowserWindow.getAllWindows()[0]
+          return win ? win.isAlwaysOnTop() : false
+        })
+      expect(await isPinned(world.app)).toBe(false)
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('[role="switch"][aria-label="Always on top"]').click()
+      await expect.poll(() => isPinned(world.app), { timeout: 5000 }).toBe(true)
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"alwaysOnTop": true'), {
+          timeout: 5000
+        })
+        .toBe(true)
+      await world.app.close()
+      app2 = await _electron.launch({
+        args: [projectRoot],
+        env: {
+          ...process.env,
+          FOLDERDOCK_ROOT: world.root,
+          FOLDERDOCK_USER_DATA: world.userData,
+          FOLDERDOCK_SOFTWARE_GPU: '1',
+          FOLDERDOCK_DEVTOOLS: '0'
+        }
+      })
+      await app2.firstWindow()
+      expect(await isPinned(app2)).toBe(true)
+    } finally {
+      try {
+        await app2?.close()
+      } catch {
+        /* already gone */
+      }
+      await close(world)
+    }
+  })
+
+  test('window size and position are remembered across restarts', async () => {
+    const world = await launch()
+    let app2: ElectronApplication | null = null
+    const boundsOf = (app: ElectronApplication) =>
+      app.evaluate(({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0]
+        return win ? win.getBounds() : null
+      })
+    try {
+      await world.app.evaluate(({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0]
+        if (win) win.setBounds({ x: 20, y: 0, width: 520, height: 590 })
+      })
+      await expect
+        .poll(async () => {
+          const b = await boundsOf(world.app)
+          if (!b) return false
+          return (
+            Math.abs(b.width - 520) <= 3 && Math.abs(b.height - 590) <= 3 && Math.abs(b.x - 20) <= 3 && Math.abs(b.y - 0) <= 3
+          )
+        }, { timeout: 5000 })
+        .toBe(true)
+      await world.app.close()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      const saved = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).windowBounds
+      expect(Math.abs(saved.width - 520)).toBeLessThanOrEqual(3)
+      expect(Math.abs(saved.height - 590)).toBeLessThanOrEqual(3)
+      expect(Math.abs(saved.x - 20)).toBeLessThanOrEqual(3)
+      expect(Math.abs(saved.y - 0)).toBeLessThanOrEqual(3)
+      app2 = await _electron.launch({
+        args: [projectRoot],
+        env: {
+          ...process.env,
+          FOLDERDOCK_ROOT: world.root,
+          FOLDERDOCK_USER_DATA: world.userData,
+          FOLDERDOCK_SOFTWARE_GPU: '1',
+          FOLDERDOCK_DEVTOOLS: '0'
+        }
+      })
+      const page2 = await app2.firstWindow()
+      await page2.waitForLoadState('domcontentloaded')
+      const bounds = await boundsOf(app2)
+      if (!bounds) throw new Error('window missing after restart')
+      expect(Math.abs(bounds.width - saved.width)).toBeLessThanOrEqual(10)
+      expect(Math.abs(bounds.height - saved.height)).toBeLessThanOrEqual(10)
+      expect(Math.abs(bounds.x - saved.x)).toBeLessThanOrEqual(10)
+      expect(Math.abs(bounds.y - saved.y)).toBeLessThanOrEqual(10)
+    } finally {
+      try {
+        await app2?.close()
+      } catch {
+        /* already gone */
+      }
+      await close(world)
+    }
+  })
+
+  test('system theme follows the OS color scheme and persists', async () => {
+    const world = await launch()
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'System' }).click()
+      const scheme = await world.page.evaluate<string>("() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'")
+      await expect(world.page.locator(scheme === 'dark' ? 'body:not(.light)' : 'body.light')).toHaveCount(1)
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"theme": "system"'), {
+          timeout: 5000
+        })
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('card size setting switches to compact and persists', async () => {
+    const world = await launch()
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Compact' }).click()
+      await expect(world.page.locator('body.compact')).toHaveCount(1)
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"viewSize": "compact"'), {
+          timeout: 5000
+        })
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('file sort setting reorders files inside a collection', async () => {
+    const world = await launch({ 'A/zzz-new.md': 'x', 'A/aaa-old.md': 'y' })
+    try {
+      const past = new Date(Date.now() - 86_400_000)
+      await fsp.utimes(path.join(world.root, 'A', 'aaa-old.md'), past, past)
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const firstRow = world.page.locator('[data-folder="A"] .file-row').first()
+      await expect(firstRow).toContainText('zzz-new.md')
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Name' }).click()
+      await settings.locator('.modal-foot .primary-button').click()
+      await expect(settings).toBeHidden()
+      await expect(world.page.locator('[data-folder="A"] .file-row').first()).toContainText('aaa-old.md')
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('close to tray hides the window and quitting stays available', async () => {
+    const world = await launch()
+    try {
+      await world.page.locator('[aria-label="Close window"]').click()
+      await expect
+        .poll(
+          () =>
+            world.app.evaluate(({ BrowserWindow }) => {
+              const win = BrowserWindow.getAllWindows()[0]
+              return win ? win.isVisible() : true
+            }),
+          { timeout: 5000 }
+        )
+        .toBe(false)
+      await world.app.evaluate(({ BrowserWindow }) => {
+        BrowserWindow.getAllWindows()[0]?.show()
+      })
+      await expect(world.page.locator('.app')).toBeVisible()
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('[role="switch"][aria-label="Close to tray"]').click()
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"closeToTray": false'), {
+          timeout: 5000
+        })
+        .toBe(true)
+      await world.page.locator('[aria-label="Close window"]').click()
+      await world.app.waitForEvent('close', { timeout: 5000 })
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('image files show a thumbnail on their paper sheet', async () => {
+    const world = await launch()
+    try {
+      await fsp.mkdir(path.join(world.root, 'Pics'), { recursive: true })
+      const png = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        'base64'
+      )
+      await fsp.writeFile(path.join(world.root, 'Pics', 'dot.png'), png)
+      const thumb = world.page.locator('[data-folder="Pics"] .sheet-thumb img')
+      await expect(thumb).toBeAttached({ timeout: 10_000 })
+      await expect(thumb).toHaveJSProperty('naturalWidth', 1)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('multi-select moves and deletes several files at once', async () => {
+    const world = await launch({
+      'A/one.md': '1',
+      'A/two.md': '2',
+      'A/three.md': '3',
+      'B/keep.md': 'b'
+    })
+    try {
+      const a = world.page.locator('[data-folder="A"]')
+      await a.locator('.folder-scene').click()
+      await a.locator('.file-row[data-file="A/one.md"]').click({ modifiers: ['Control'] })
+      await a.locator('.file-row[data-file="A/two.md"]').click({ modifiers: ['Control'] })
+      await expect(world.page.locator('.selection-bar')).toContainText('2 selected')
+      await world.page.locator('.selection-bar button', { hasText: 'Move to collection' }).click()
+      await world.page.locator('.move-option', { hasText: 'B' }).click()
+      await expect(world.page.locator('.selection-bar')).toHaveCount(0, { timeout: 15_000 })
+      await expect(a.locator('.file-row')).toHaveCount(1)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(true)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'two.md'))).toBe(true)
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(false)
+
+      const b = world.page.locator('[data-folder="B"]')
+      await b.locator('.folder-scene').click()
+      await b.locator('.file-row[data-file="B/one.md"]').click({ modifiers: ['Control'] })
+      await b.locator('.file-row[data-file="B/two.md"]').click({ modifiers: ['Control'] })
+      await expect(world.page.locator('.selection-bar')).toContainText('2 selected')
+      await world.page.locator('.selection-bar button', { hasText: 'Delete' }).click()
+      await expect(world.page.locator('.modal', { hasText: 'Delete 2 files?' })).toBeVisible()
+      await world.page.locator('.modal-foot .primary-button').click()
+      await expect(b.locator('.file-row')).toHaveCount(1, { timeout: 15_000 })
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(false)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'two.md'))).toBe(false)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'keep.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('recent filter shows only recently modified files', async () => {
+    const world = await launch({ 'A/fresh.md': 'now', 'A/stale.md': 'then' })
+    try {
+      const past = new Date(Date.now() - 30 * 86_400_000)
+      await fsp.utimes(path.join(world.root, 'A', 'stale.md'), past, past)
+      await world.page.locator('.filter-chip', { hasText: 'Recent' }).click()
+      const a = world.page.locator('[data-folder="A"]')
+      await expect(a.locator('.file-row')).toHaveCount(1)
+      await expect(a.locator('.file-row')).toContainText('fresh.md')
+      await world.page.locator('.filter-chip', { hasText: 'All' }).click()
+      await expect(a.locator('.file-row')).toHaveCount(2)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('confirm-delete can be skipped from settings', async () => {
+    const world = await launch({ 'A/quick.md': 'x' })
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('[role="switch"][aria-label="Confirm before delete"]').click()
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"confirmDelete": false'), {
+          timeout: 5000
+        })
+        .toBe(true)
+      const a = world.page.locator('[data-folder="A"]')
+      await a.locator('.folder-scene').click()
+      const row = a.locator('.file-row', { hasText: 'quick.md' })
+      await row.hover()
+      await row.locator('.file-more').click()
+      await world.page.locator('.context-menu button', { hasText: 'Delete file' }).click()
+      await expect(a.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'quick.md'))).toBe(false)
     } finally {
       await close(world)
     }

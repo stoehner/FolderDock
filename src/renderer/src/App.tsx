@@ -11,6 +11,7 @@ import { ModalLayer } from './components/ModalLayer'
 import { SidePreview } from './components/SidePreview'
 import { HoverSummary } from './components/HoverSummary'
 import { DropHint, Toast } from './components/Toast'
+import { SelectionBar } from './components/SelectionBar'
 import { createNoteOp, chooseImportOp, dropBackgroundOp, saveEditorOp } from './lib/ops'
 
 export default function App() {
@@ -44,6 +45,10 @@ export default function App() {
         }
         if (ui.previewRelPath) {
           ui.closePreview()
+          return
+        }
+        if (ui.selection.length > 0) {
+          ui.clearSelection()
           return
         }
         if (ui.openFolder) {
@@ -151,6 +156,7 @@ export default function App() {
       <Toast />
       <DropHint />
       <HoverSummary />
+      <SelectionBar />
     </div>
   )
 }

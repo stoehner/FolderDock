@@ -533,6 +533,36 @@
   color: #fff;
   background: #2b3d4b;
 }
+.settings-toggle {
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  border: 1px solid #485664;
+  background: #1b242d;
+  padding: 0;
+  position: relative;
+  flex: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.settings-toggle.on {
+  background: #2f6f8f;
+  border-color: #6ea9cd;
+}
+.settings-toggle-knob {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #8ea2b1;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.settings-toggle.on .settings-toggle-knob {
+  transform: translateX(15px);
+  background: #fff;
+}
 
 @media (max-width: 660px) {
   .side-preview {

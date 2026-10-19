@@ -56,4 +56,18 @@ export class PrefsStore {
       console.warn('[folderdock] prefs save failed:', err)
     }
   }
+
+  saveSync(): void {
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = null
+    }
+    try {
+      const tmp = `${this.file}.fdtmp`
+      fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2), 'utf8')
+      fs.renameSync(tmp, this.file)
+    } catch (err) {
+      console.warn('[folderdock] prefs save failed:', err)
+    }
+  }
 }

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { extOf, isImageKind, isTextKind, kindForExt, kindLabel } from '../../../shared/kinds'
 import { folderOfRel, formatSize } from '../lib/api'
 import { useExcerpts } from '../state/excerpts'
+import { useUI } from '../state/ui'
+import type { HoverDelay } from '../../../shared/types'
 
 interface HoverTarget {
   relPath: string
@@ -9,7 +11,7 @@ interface HoverTarget {
   y: number
 }
 
-const DELAY_MS = 250
+const HOVER_DELAY_MS: Record<HoverDelay, number> = { fast: 100, normal: 250, slow: 600 }
 
 export function HoverSummary() {
   const [target, setTarget] = useState<HoverTarget | null>(null)
@@ -44,7 +46,7 @@ export function HoverSummary() {
         visibleRef.current = true
         setTarget({ relPath, x: r.right, y: r.top })
         setVisible(true)
-      }, DELAY_MS)
+      }, HOVER_DELAY_MS[useUI.getState().hoverDelay])
     }
     function onOut(e: MouseEvent) {
       const el = (e.target as HTMLElement | null)?.closest?.('.document-sheet, .file-row') as HTMLElement | null
