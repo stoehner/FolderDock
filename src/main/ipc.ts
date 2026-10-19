@@ -4,6 +4,7 @@ import path from 'node:path'
 import type { LibrarySnapshot, Prefs } from '../shared/types'
 import { extOf, kindForExt } from '../shared/kinds'
 import { prunePrefs } from '../shared/prefs'
+import { CHANNELS, SEND } from '../shared/channels'
 import type { PrefsStore } from './store'
 import * as ops from './library/ops'
 import { dragIconFor } from './library/drag'
@@ -47,33 +48,33 @@ function pruneOrphanPrefs(ctx: MainContext, snapshot: LibrarySnapshot): void {
 }
 
 export function registerIpc(ctx: MainContext): void {
-  handle('app:info', async () => {
+  handle(CHANNELS.appInfo, async () => {
     const prefs = ctx.prefs.get()
     return { version: app.getVersion(), electron: process.versions.electron ?? '', root: ctx.getRoot(), overridden: ctx.rootOverridden(), defaultRoot: prefs.rootPath }
   })
 
-  handle('library:scan', async () => {
+  handle(CHANNELS.scan, async () => {
     const snap = await scanLibrary(ctx.getRoot())
     pruneOrphanPrefs(ctx, snap)
     return snap
   })
-  handle('search:content', async (_e, query: string) => ops.searchContent(ctx.getRoot(), query))
+  handle(CHANNELS.searchContent, async (_e, query: string) => ops.searchContent(ctx.getRoot(), query))
 
-  handle('folder:create', async (_e, name: string) => ops.createFolder(ctx.getRoot(), name))
-  handle('folder:rename', async (_e, oldName: string, newName: string) => ops.renameFolder(ctx.getRoot(), oldName, newName))
-  handle('folder:delete', async (_e, name: string) => ops.deleteFolder(ctx.getRoot(), name))
+  handle(CHANNELS.createFolder, async (_e, name: string) => ops.createFolder(ctx.getRoot(), name))
+  handle(CHANNELS.renameFolder, async (_e, oldName: string, newName: string) => ops.renameFolder(ctx.getRoot(), oldName, newName))
+  handle(CHANNELS.deleteFolder, async (_e, name: string) => ops.deleteFolder(ctx.getRoot(), name))
 
-  handle('file:readText', async (_e, relPath: string) => ops.readTextFile(ctx.getRoot(), relPath))
-  handle('file:writeText', async (_e, req) => ops.writeTextFile(ctx.getRoot(), req))
-  handle('file:readBytes', async (_e, relPath: string, maxBytes: number) => ops.readBytes(ctx.getRoot(), relPath, maxBytes))
-  handle('file:excerpt', async (_e, relPath: string) => ops.excerptFor(ctx.getRoot(), relPath))
-  handle('file:meta', async (_e, relPath: string) => ops.detailedMeta(ctx.getRoot(), relPath))
-  handle('file:rename', async (_e, relPath: string, newName: string) => ops.renameFile(ctx.getRoot(), relPath, newName))
-  handle('file:move', async (_e, relPath: string, targetFolder: string) => ops.moveFile(ctx.getRoot(), relPath, targetFolder))
-  handle('file:delete', async (_e, relPath: string) => ops.deleteFile(ctx.getRoot(), relPath))
-  handle('files:drop', async (_e, paths: string[], targetFolder: string) => ops.importPaths(ctx.getRoot(), paths, targetFolder))
+  handle(CHANNELS.readTextFile, async (_e, relPath: string) => ops.readTextFile(ctx.getRoot(), relPath))
+  handle(CHANNELS.writeTextFile, async (_e, req) => ops.writeTextFile(ctx.getRoot(), req))
+  handle(CHANNELS.readBytes, async (_e, relPath: string, maxBytes: number) => ops.readBytes(ctx.getRoot(), relPath, maxBytes))
+  handle(CHANNELS.excerpt, async (_e, relPath: string) => ops.excerptFor(ctx.getRoot(), relPath))
+  handle(CHANNELS.fileMeta, async (_e, relPath: string) => ops.detailedMeta(ctx.getRoot(), relPath))
+  handle(CHANNELS.renameFile, async (_e, relPath: string, newName: string) => ops.renameFile(ctx.getRoot(), relPath, newName))
+  handle(CHANNELS.moveFile, async (_e, relPath: string, targetFolder: string) => ops.moveFile(ctx.getRoot(), relPath, targetFolder))
+  handle(CHANNELS.deleteFile, async (_e, relPath: string) => ops.deleteFile(ctx.getRoot(), relPath))
+  handle(CHANNELS.dropFiles, async (_e, paths: string[], targetFolder: string) => ops.importPaths(ctx.getRoot(), paths, targetFolder))
 
-  handle('files:choose', async (_e, targetFolder: string) => {
+  handle(CHANNELS.chooseAndImport, async (_e, targetFolder: string) => {
     const win = ctx.getWindow()
     if (!win) throw new Error('No window is available.')
     const res = await dialog.showOpenDialog(win, {
@@ -86,25 +87,25 @@ export function registerIpc(ctx: MainContext): void {
     return ops.importPaths(ctx.getRoot(), res.filePaths, targetFolder)
   })
 
-  handle('file:reveal', async (_e, relPath: string) => {
+  handle(CHANNELS.revealFile, async (_e, relPath: string) => {
     const abs = resolveWithinRoot(ctx.getRoot(), relPath)
     if (!abs) throw new Error('That path is outside the library.')
     shell.showItemInFolder(abs)
   })
 
-  handle('file:openExternal', async (_e, relPath: string) => {
+  handle(CHANNELS.openFileExternal, async (_e, relPath: string) => {
     const abs = resolveWithinRoot(ctx.getRoot(), relPath)
     if (!abs) throw new Error('That path is outside the library.')
     const result = await shell.openPath(abs)
     if (result) throw new Error(result)
   })
 
-  handle('root:open', async () => {
+  handle(CHANNELS.openRoot, async () => {
     const result = await shell.openPath(ctx.getRoot())
     if (result) throw new Error(result)
   })
 
-  handle('root:choose', async () => {
+  handle(CHANNELS.chooseRoot, async () => {
     const win = ctx.getWindow()
     if (!win) throw new Error('No window is available.')
     const res = await dialog.showOpenDialog(win, {
@@ -116,9 +117,9 @@ export function registerIpc(ctx: MainContext): void {
     return res.filePaths[0]
   })
 
-  handle('prefs:get', async () => ctx.prefs.get())
+  handle(CHANNELS.getPrefs, async () => ctx.prefs.get())
 
-  handle('prefs:set', async (_e, patch: Partial<Prefs>) => {
+  handle(CHANNELS.setPrefs, async (_e, patch: Partial<Prefs>) => {
     const before = ctx.prefs.get().rootPath
     const next = ctx.prefs.patch(patch)
     if (patch.alwaysOnTop !== undefined) {
@@ -134,11 +135,11 @@ export function registerIpc(ctx: MainContext): void {
     return next
   })
 
-  handle('file:createNote', async (_e, folderName: string, baseName?: string) =>
+  handle(CHANNELS.createNote, async (_e, folderName: string, baseName?: string) =>
     ops.createNote(ctx.getRoot(), folderName, baseName)
   )
 
-  ipcMain.on('drag:start', (event, relPath: unknown, additional: unknown) => {
+  ipcMain.on(SEND.startDrag, (event, relPath: unknown, additional: unknown) => {
     try {
       if (typeof relPath !== 'string') return
       const rest =
@@ -155,15 +156,15 @@ export function registerIpc(ctx: MainContext): void {
     }
   })
 
-  ipcMain.on('window:minimize', () => ctx.getWindow()?.minimize())
-  ipcMain.on('window:toggleMaximize', () => {
+  ipcMain.on(SEND.minimize, () => ctx.getWindow()?.minimize())
+  ipcMain.on(SEND.toggleMaximize, () => {
     const win = ctx.getWindow()
     if (!win) return
     if (win.isMaximized()) win.unmaximize()
     else win.maximize()
   })
-  ipcMain.on('window:close', () => ctx.getWindow()?.close())
-  ipcMain.on('window:widen', (_e, width: unknown) => {
+  ipcMain.on(SEND.close, () => ctx.getWindow()?.close())
+  ipcMain.on(SEND.widen, (_e, width: unknown) => {
     const win = ctx.getWindow()
     if (!win || win.isMaximized() || typeof width !== 'number' || !Number.isFinite(width)) return
     const bounds = win.getBounds()

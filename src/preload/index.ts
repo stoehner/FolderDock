@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { FolderDockBridge } from '../shared/api'
+import { CHANNELS, EVENTS, SEND } from '../shared/channels'
 import type {
   ContentMatch,
   DetailedFileMeta,
@@ -15,55 +16,52 @@ import type {
 type NoteResult = { relPath: string; mtimeMs: number }
 type AppInfo = { version: string; electron: string; root: string; overridden: boolean; defaultRoot: string | null }
 
+function invoke<T>(channel: string, ...args: unknown[]): Promise<IPCResult<T>> {
+  return ipcRenderer.invoke(channel, ...args) as Promise<IPCResult<T>>
+}
+
 const api: FolderDockBridge = {
-  appInfo: () => ipcRenderer.invoke('app:info') as Promise<IPCResult<AppInfo>>,
-  scan: () => ipcRenderer.invoke('library:scan') as Promise<IPCResult<LibrarySnapshot>>,
-  searchContent: (query: string) => ipcRenderer.invoke('search:content', query) as Promise<IPCResult<ContentMatch[]>>,
-  createFolder: (name: string) => ipcRenderer.invoke('folder:create', name) as Promise<IPCResult<LibrarySnapshot>>,
-  renameFolder: (oldName: string, newName: string) =>
-    ipcRenderer.invoke('folder:rename', oldName, newName) as Promise<IPCResult<LibrarySnapshot>>,
-  deleteFolder: (name: string) => ipcRenderer.invoke('folder:delete', name) as Promise<IPCResult<LibrarySnapshot>>,
-  readTextFile: (relPath: string) => ipcRenderer.invoke('file:readText', relPath) as Promise<IPCResult<TextFileContent>>,
-  writeTextFile: (req: WriteTextRequest) => ipcRenderer.invoke('file:writeText', req) as Promise<IPCResult<WriteTextResult>>,
-  readBytes: (relPath: string, maxBytes: number) =>
-    ipcRenderer.invoke('file:readBytes', relPath, maxBytes) as Promise<IPCResult<ArrayBuffer>>,
-  excerpt: (relPath: string) => ipcRenderer.invoke('file:excerpt', relPath) as Promise<IPCResult<string>>,
-  fileMeta: (relPath: string) => ipcRenderer.invoke('file:meta', relPath) as Promise<IPCResult<DetailedFileMeta>>,
-  renameFile: (relPath: string, newName: string) =>
-    ipcRenderer.invoke('file:rename', relPath, newName) as Promise<IPCResult<LibrarySnapshot>>,
-  moveFile: (relPath: string, targetFolder: string) =>
-    ipcRenderer.invoke('file:move', relPath, targetFolder) as Promise<IPCResult<LibrarySnapshot>>,
-  deleteFile: (relPath: string) => ipcRenderer.invoke('file:delete', relPath) as Promise<IPCResult<LibrarySnapshot>>,
-  dropFiles: (paths: string[], targetFolder: string) =>
-    ipcRenderer.invoke('files:drop', paths, targetFolder) as Promise<IPCResult<ImportResult>>,
-  chooseAndImport: (targetFolder: string) =>
-    ipcRenderer.invoke('files:choose', targetFolder) as Promise<IPCResult<ImportResult>>,
-  revealFile: (relPath: string) => ipcRenderer.invoke('file:reveal', relPath) as Promise<IPCResult<void>>,
-  openFileExternal: (relPath: string) => ipcRenderer.invoke('file:openExternal', relPath) as Promise<IPCResult<void>>,
-  openRoot: () => ipcRenderer.invoke('root:open') as Promise<IPCResult<void>>,
-  chooseRoot: () => ipcRenderer.invoke('root:choose') as Promise<IPCResult<string | null>>,
-  getPrefs: () => ipcRenderer.invoke('prefs:get') as Promise<IPCResult<Prefs>>,
-  setPrefs: (patch: Partial<Prefs>) => ipcRenderer.invoke('prefs:set', patch) as Promise<IPCResult<Prefs>>,
-  createNote: ((folderName: string, baseName?: string) =>
-    ipcRenderer.invoke('file:createNote', folderName, baseName) as Promise<IPCResult<NoteResult>>) as FolderDockBridge['createNote'],
-  startDrag: (relPath: string, additionalFiles?: string[]) => ipcRenderer.send('drag:start', relPath, additionalFiles),
-  minimize: () => ipcRenderer.send('window:minimize'),
-  toggleMaximize: () => ipcRenderer.send('window:toggleMaximize'),
-  close: () => ipcRenderer.send('window:close'),
-  widen: (width: number) => ipcRenderer.send('window:widen', width),
+  appInfo: () => invoke<AppInfo>(CHANNELS.appInfo),
+  scan: () => invoke<LibrarySnapshot>(CHANNELS.scan),
+  searchContent: (query: string) => invoke<ContentMatch[]>(CHANNELS.searchContent, query),
+  createFolder: (name: string) => invoke<LibrarySnapshot>(CHANNELS.createFolder, name),
+  renameFolder: (oldName: string, newName: string) => invoke<LibrarySnapshot>(CHANNELS.renameFolder, oldName, newName),
+  deleteFolder: (name: string) => invoke<LibrarySnapshot>(CHANNELS.deleteFolder, name),
+  readTextFile: (relPath: string) => invoke<TextFileContent>(CHANNELS.readTextFile, relPath),
+  writeTextFile: (req: WriteTextRequest) => invoke<WriteTextResult>(CHANNELS.writeTextFile, req),
+  readBytes: (relPath: string, maxBytes: number) => invoke<ArrayBuffer>(CHANNELS.readBytes, relPath, maxBytes),
+  excerpt: (relPath: string) => invoke<string>(CHANNELS.excerpt, relPath),
+  fileMeta: (relPath: string) => invoke<DetailedFileMeta>(CHANNELS.fileMeta, relPath),
+  renameFile: (relPath: string, newName: string) => invoke<LibrarySnapshot>(CHANNELS.renameFile, relPath, newName),
+  moveFile: (relPath: string, targetFolder: string) => invoke<LibrarySnapshot>(CHANNELS.moveFile, relPath, targetFolder),
+  deleteFile: (relPath: string) => invoke<LibrarySnapshot>(CHANNELS.deleteFile, relPath),
+  dropFiles: (paths: string[], targetFolder: string) => invoke<ImportResult>(CHANNELS.dropFiles, paths, targetFolder),
+  chooseAndImport: (targetFolder: string) => invoke<ImportResult>(CHANNELS.chooseAndImport, targetFolder),
+  revealFile: (relPath: string) => invoke<void>(CHANNELS.revealFile, relPath),
+  openFileExternal: (relPath: string) => invoke<void>(CHANNELS.openFileExternal, relPath),
+  openRoot: () => invoke<void>(CHANNELS.openRoot),
+  chooseRoot: () => invoke<string | null>(CHANNELS.chooseRoot),
+  getPrefs: () => invoke<Prefs>(CHANNELS.getPrefs),
+  setPrefs: (patch: Partial<Prefs>) => invoke<Prefs>(CHANNELS.setPrefs, patch),
+  createNote: (folderName: string, baseName?: string) => invoke<NoteResult>(CHANNELS.createNote, folderName, baseName),
+  startDrag: (relPath: string, additionalFiles?: string[]) => ipcRenderer.send(SEND.startDrag, relPath, additionalFiles),
+  minimize: () => ipcRenderer.send(SEND.minimize),
+  toggleMaximize: () => ipcRenderer.send(SEND.toggleMaximize),
+  close: () => ipcRenderer.send(SEND.close),
+  widen: (width: number) => ipcRenderer.send(SEND.widen, width),
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
   onLibraryChanged: (cb: () => void) => {
     const listener = (): void => cb()
-    ipcRenderer.on('library:changed', listener)
+    ipcRenderer.on(EVENTS.libraryChanged, listener)
     return () => {
-      ipcRenderer.removeListener('library:changed', listener)
+      ipcRenderer.removeListener(EVENTS.libraryChanged, listener)
     }
   },
   onWindowMaximized: (cb: (maximized: boolean) => void) => {
     const listener = (_e: Electron.IpcRendererEvent, maximized: boolean): void => cb(maximized)
-    ipcRenderer.on('window:maximized', listener)
+    ipcRenderer.on(EVENTS.windowMaximized, listener)
     return () => {
-      ipcRenderer.removeListener('window:maximized', listener)
+      ipcRenderer.removeListener(EVENTS.windowMaximized, listener)
     }
   }
 }

@@ -1,5 +1,6 @@
 import { BrowserWindow, app, screen, shell } from 'electron'
 import path from 'node:path'
+import { EVENTS } from '../shared/channels'
 import type { PrefsStore } from './store'
 
 export interface WindowDeps {
@@ -49,7 +50,7 @@ export function createWindow(deps: WindowDeps): BrowserWindow {
   if (prefs.alwaysOnTop) win.setAlwaysOnTop(true, 'screen-saver')
 
   const sendMaximized = (): void => {
-    void win.webContents.send('window:maximized', win.isMaximized())
+    void win.webContents.send(EVENTS.windowMaximized, win.isMaximized())
   }
   const persistBounds = (): void => {
     deps.prefs.patch({ windowBounds: { ...win.getNormalBounds(), maximized: win.isMaximized() } })

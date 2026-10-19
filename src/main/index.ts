@@ -8,6 +8,7 @@ import { PrefsStore } from './store'
 import { startWatcher } from './library/watch'
 import { ensureRoot, resolveRoot, seedWelcome } from './library/root'
 import { resolveWithinRoot } from './library/validate'
+import { EVENTS } from '../shared/channels'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -63,7 +64,7 @@ async function applyRoot(root: string, opts: { seed?: boolean } = {}): Promise<v
   stopWatcher?.()
   stopWatcher = startWatcher(
     root,
-    () => mainWindow?.webContents.send('library:changed'),
+    () => mainWindow?.webContents.send(EVENTS.libraryChanged),
     err => console.warn('[folderdock] watcher error:', err)
   )
 }
