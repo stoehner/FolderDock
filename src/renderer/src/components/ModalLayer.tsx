@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { artStyles, artIdFor, ART_CYCLE } from '../lib/art'
 import { ico } from '../lib/icons'
 import { useLibrary } from '../state/library'
+import { usePrefs } from '../state/prefs'
 import { useUI } from '../state/ui'
 import { EditorModal } from './Editor'
 import { createFolderOp, moveFileOp, moveFilesOp, renameFileOp, renameFolderOp } from '../lib/ops'
@@ -418,20 +419,17 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 
 function SettingsModal() {
   const snapshot = useLibrary(s => s.snapshot)
-  const theme = useUI(s => s.theme)
-  const setTheme = useUI(s => s.setTheme)
-  const alwaysOnTop = useUI(s => s.alwaysOnTop)
-  const setAlwaysOnTop = useUI(s => s.setAlwaysOnTop)
-  const viewSize = useUI(s => s.viewSize)
-  const setViewSize = useUI(s => s.setViewSize)
-  const fileSort = useUI(s => s.fileSort)
-  const setFileSort = useUI(s => s.setFileSort)
-  const closeToTray = useUI(s => s.closeToTray)
-  const setCloseToTray = useUI(s => s.setCloseToTray)
-  const confirmDelete = useUI(s => s.confirmDelete)
-  const setConfirmDelete = useUI(s => s.setConfirmDelete)
-  const hoverDelay = useUI(s => s.hoverDelay)
-  const setHoverDelay = useUI(s => s.setHoverDelay)
+  const prefs = usePrefs(s => s.prefs)
+  const patch = usePrefs(s => s.patch)
+  const setTheme = usePrefs(s => s.setTheme)
+  const setViewSize = usePrefs(s => s.setViewSize)
+  const theme = prefs.theme
+  const alwaysOnTop = prefs.alwaysOnTop
+  const viewSize = prefs.viewSize
+  const fileSort = prefs.fileSort
+  const closeToTray = prefs.closeToTray
+  const confirmDelete = prefs.confirmDelete
+  const hoverDelay = prefs.hoverDelay
   const [info, setInfo] = useState<{ version: string; electron: string; overridden: boolean; defaultRoot: string | null } | null>(null)
   useEffect(() => {
     void call(api.appInfo())
@@ -501,13 +499,13 @@ function SettingsModal() {
             <div className="settings-sub">How files order inside every collection.</div>
           </div>
           <div className="theme-choices">
-            <button className={`theme-choice${fileSort === 'recent' ? ' active' : ''}`} onClick={() => setFileSort('recent')}>
+            <button className={`theme-choice${fileSort === 'recent' ? ' active' : ''}`} onClick={() => patch({ fileSort: 'recent' })}>
               Recent
             </button>
-            <button className={`theme-choice${fileSort === 'name' ? ' active' : ''}`} onClick={() => setFileSort('name')}>
+            <button className={`theme-choice${fileSort === 'name' ? ' active' : ''}`} onClick={() => patch({ fileSort: 'name' })}>
               Name
             </button>
-            <button className={`theme-choice${fileSort === 'size' ? ' active' : ''}`} onClick={() => setFileSort('size')}>
+            <button className={`theme-choice${fileSort === 'size' ? ' active' : ''}`} onClick={() => patch({ fileSort: 'size' })}>
               Size
             </button>
           </div>
@@ -517,21 +515,21 @@ function SettingsModal() {
             <div className="settings-label">Always on top</div>
             <div className="settings-sub">Keeps the shelf visible while you drag files out to other apps.</div>
           </div>
-          <Toggle on={alwaysOnTop} onChange={setAlwaysOnTop} label="Always on top" />
+          <Toggle on={alwaysOnTop} onChange={v => patch({ alwaysOnTop: v })} label="Always on top" />
         </div>
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">Close to tray</div>
             <div className="settings-sub">Closing the window keeps FolderDock in the system tray. Quit from the tray menu.</div>
           </div>
-          <Toggle on={closeToTray} onChange={setCloseToTray} label="Close to tray" />
+          <Toggle on={closeToTray} onChange={v => patch({ closeToTray: v })} label="Close to tray" />
         </div>
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">Confirm before delete</div>
             <div className="settings-sub">Ask before moving files or collections to the Recycle Bin.</div>
           </div>
-          <Toggle on={confirmDelete} onChange={setConfirmDelete} label="Confirm before delete" />
+          <Toggle on={confirmDelete} onChange={v => patch({ confirmDelete: v })} label="Confirm before delete" />
         </div>
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
@@ -539,13 +537,13 @@ function SettingsModal() {
             <div className="settings-sub">How quickly the file summary tooltip appears.</div>
           </div>
           <div className="theme-choices">
-            <button className={`theme-choice${hoverDelay === 'fast' ? ' active' : ''}`} onClick={() => setHoverDelay('fast')}>
+            <button className={`theme-choice${hoverDelay === 'fast' ? ' active' : ''}`} onClick={() => patch({ hoverDelay: 'fast' })}>
               Fast
             </button>
-            <button className={`theme-choice${hoverDelay === 'normal' ? ' active' : ''}`} onClick={() => setHoverDelay('normal')}>
+            <button className={`theme-choice${hoverDelay === 'normal' ? ' active' : ''}`} onClick={() => patch({ hoverDelay: 'normal' })}>
               Normal
             </button>
-            <button className={`theme-choice${hoverDelay === 'slow' ? ' active' : ''}`} onClick={() => setHoverDelay('slow')}>
+            <button className={`theme-choice${hoverDelay === 'slow' ? ' active' : ''}`} onClick={() => patch({ hoverDelay: 'slow' })}>
               Slow
             </button>
           </div>

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { api } from './lib/api'
 import { ico } from './lib/icons'
 import { useLibrary } from './state/library'
+import { usePrefs } from './state/prefs'
 import { useUI } from './state/ui'
 import { Titlebar } from './components/Titlebar'
 import { Toolbar } from './components/Toolbar'
@@ -20,7 +21,10 @@ export default function App() {
   const libError = useLibrary(s => s.error)
 
   useEffect(() => {
-    void useUI.getState().boot()
+    void (async () => {
+      await usePrefs.getState().boot()
+      await useUI.getState().boot()
+    })()
     const offLib = api.onLibraryChanged(() => void useLibrary.getState().refresh())
     const offMax = api.onWindowMaximized(m => useUI.getState().setMaximized(m))
     return () => {

@@ -7,6 +7,7 @@ import { artFor } from '../lib/art'
 import { useLibrary } from '../state/library'
 import { useDrag } from '../state/drag'
 import { useUI, type FilterKind } from '../state/ui'
+import { usePrefs } from '../state/prefs'
 import type { FileSort } from '../../../shared/types'
 import { FileRow } from './FileRow'
 import { PaperSheet } from './PaperSheet'
@@ -79,7 +80,7 @@ export function LibraryGrid() {
   const folderArt = useUI(s => s.folderArt)
   const starred = useUI(s => s.starred)
   const contentMatches = useUI(s => s.contentMatches)
-  const fileSort = useUI(s => s.fileSort)
+  const fileSort = usePrefs(s => s.prefs.fileSort)
   const openFolder = useUI(s => s.openFolder)
   const previewRelPath = useUI(s => s.previewRelPath)
   const openModal = useUI(s => s.openModal)

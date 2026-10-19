@@ -1,5 +1,6 @@
 import { api, call, errText, pathInsideRoot } from './api'
 import { useLibrary } from '../state/library'
+import { usePrefs } from '../state/prefs'
 import { targetFolderForNewItems, useUI } from '../state/ui'
 import type { ImportResult } from '../../../shared/types'
 
@@ -305,7 +306,7 @@ export function requestCloseEditor(): void {
 }
 
 export function promptDeleteFile(relPath: string, name: string): void {
-  if (!useUI.getState().confirmDelete) {
+  if (!usePrefs.getState().prefs.confirmDelete) {
     void deleteFileOp(relPath)
     return
   }
@@ -320,7 +321,7 @@ export function promptDeleteFile(relPath: string, name: string): void {
 }
 
 export function promptDeleteFiles(relPaths: string[]): void {
-  if (!useUI.getState().confirmDelete) {
+  if (!usePrefs.getState().prefs.confirmDelete) {
     void deleteFilesOp(relPaths)
     return
   }
@@ -337,7 +338,7 @@ export function promptDeleteFiles(relPaths: string[]): void {
 }
 
 export function promptDeleteFolder(name: string, fileCount: number): void {
-  if (!useUI.getState().confirmDelete) {
+  if (!usePrefs.getState().prefs.confirmDelete) {
     void deleteFolderOp(name)
     return
   }

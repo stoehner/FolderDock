@@ -615,6 +615,39 @@ test.describe('FolderDock app', () => {
     }
   })
 
+  test('deleting a collection prunes its saved preferences', async () => {
+    const world = await launch({ 'A/doomed.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      await card.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+      const modal = world.page.locator('.modal')
+      await modal.locator('.swatch').nth(1).click()
+      await modal.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && /"folderArt"[\s\S]*"A"\s*:/.test(fsSync.readFileSync(prefsFile, 'utf8')), {
+          timeout: 5000
+        })
+        .toBe(true)
+      await card.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Delete collection' }).click()
+      await world.page.locator('.modal-foot .primary-button').click()
+      await expect
+        .poll(
+          () =>
+            fsSync.existsSync(prefsFile)
+              ? !/"folderArt"[\s\S]*"A"\s*:/.test(fsSync.readFileSync(prefsFile, 'utf8'))
+              : true,
+          { timeout: 15_000 }
+        )
+        .toBe(true)
+      expect(fsSync.existsSync(path.join(world.root, 'A'))).toBe(false)
+    } finally {
+      await close(world)
+    }
+  })
+
   test('right-click on a file row opens the file context menu', async () => {
     const world = await launch({ 'A/doc.md': 'x' })
     try {

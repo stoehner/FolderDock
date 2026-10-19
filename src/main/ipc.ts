@@ -1,8 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain, screen, shell } from 'electron'
 import fsSync from 'node:fs'
 import path from 'node:path'
-import type { Prefs } from '../shared/types'
+import type { LibrarySnapshot, Prefs } from '../shared/types'
 import { extOf, kindForExt } from '../shared/kinds'
+import { prunePrefs } from '../shared/prefs'
 import type { PrefsStore } from './store'
 import * as ops from './library/ops'
 import { dragIconFor } from './library/drag'
@@ -28,13 +29,34 @@ function handle<T>(channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...
   })
 }
 
+function pruneOrphanPrefs(ctx: MainContext, snapshot: LibrarySnapshot): void {
+  const before = ctx.prefs.get()
+  const names = snapshot.folders.filter(f => !f.virtual).map(f => f.name)
+  const after = prunePrefs(before, names)
+  if (
+    after.folderOrder.length !== before.folderOrder.length ||
+    Object.keys(after.folderArt).length !== Object.keys(before.folderArt).length ||
+    after.openFolder !== before.openFolder
+  ) {
+    ctx.prefs.patch({
+      folderOrder: after.folderOrder,
+      folderArt: after.folderArt,
+      openFolder: after.openFolder
+    })
+  }
+}
+
 export function registerIpc(ctx: MainContext): void {
   handle('app:info', async () => {
     const prefs = ctx.prefs.get()
     return { version: app.getVersion(), electron: process.versions.electron ?? '', root: ctx.getRoot(), overridden: ctx.rootOverridden(), defaultRoot: prefs.rootPath }
   })
 
-  handle('library:scan', async () => scanLibrary(ctx.getRoot()))
+  handle('library:scan', async () => {
+    const snap = await scanLibrary(ctx.getRoot())
+    pruneOrphanPrefs(ctx, snap)
+    return snap
+  })
   handle('search:content', async (_e, query: string) => ops.searchContent(ctx.getRoot(), query))
 
   handle('folder:create', async (_e, name: string) => ops.createFolder(ctx.getRoot(), name))

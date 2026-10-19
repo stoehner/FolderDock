@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import type { FileSort, HoverDelay, Prefs, Theme, ViewSize } from '../../../shared/types'
+import type { Prefs } from '../../../shared/types'
 import { api, call, errText } from '../lib/api'
 import { useLibrary } from './library'
+import { usePrefs } from './prefs'
 
 export type FilterKind = 'all' | 'markdown' | 'image' | 'pdf' | 'favorites' | 'recent'
 
@@ -41,7 +42,6 @@ export interface EditorState {
 
 interface UIState {
   booted: boolean
-  theme: Theme
   search: string
   filter: FilterKind
   openFolder: string | null
@@ -56,26 +56,13 @@ interface UIState {
   maximized: boolean
   dragDepth: number
   contentMatches: Record<string, string>
-  alwaysOnTop: boolean
-  viewSize: ViewSize
-  fileSort: FileSort
-  closeToTray: boolean
-  confirmDelete: boolean
-  hoverDelay: HoverDelay
   selection: string[]
   toast: { text: string; kind: 'info' | 'error'; id: number } | null
 
   boot: () => Promise<void>
   notify: (text: string, kind?: 'info' | 'error') => void
-  setTheme: (t: Theme) => void
   setSearch: (s: string) => void
   setContentMatches: (m: Record<string, string>) => void
-  setAlwaysOnTop: (v: boolean) => void
-  setViewSize: (v: ViewSize) => void
-  setFileSort: (v: FileSort) => void
-  setCloseToTray: (v: boolean) => void
-  setConfirmDelete: (v: boolean) => void
-  setHoverDelay: (v: HoverDelay) => void
   toggleSelect: (relPath: string) => void
   clearSelection: () => void
   setFilter: (f: FilterKind) => void
@@ -108,32 +95,16 @@ let persistTimer: ReturnType<typeof setTimeout> | null = null
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 let toastId = 0
 
-function effectiveTheme(t: Theme): 'dark' | 'light' {
-  if (t === 'system') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  return t
-}
-
-function applyThemeClass(t: Theme): void {
-  document.body.classList.toggle('light', effectiveTheme(t) === 'light')
-}
-
 function schedulePersist(): void {
   if (persistTimer) clearTimeout(persistTimer)
   persistTimer = setTimeout(() => {
     persistTimer = null
     const s = useUI.getState()
     const patch: Partial<Prefs> = {
-      theme: s.theme,
       folderOrder: s.folderOrder,
       folderArt: s.folderArt,
       starred: s.starred,
-      openFolder: s.openFolder,
-      alwaysOnTop: s.alwaysOnTop,
-      viewSize: s.viewSize,
-      fileSort: s.fileSort,
-      closeToTray: s.closeToTray,
-      confirmDelete: s.confirmDelete,
-      hoverDelay: s.hoverDelay
+      openFolder: s.openFolder
     }
     void api.setPrefs(patch).catch(() => undefined)
   }, 200)
@@ -141,7 +112,6 @@ function schedulePersist(): void {
 
 export const useUI = create<UIState>((set, get) => ({
   booted: false,
-  theme: 'dark',
   search: '',
   filter: 'all',
   openFolder: null,
@@ -156,37 +126,18 @@ export const useUI = create<UIState>((set, get) => ({
   maximized: false,
   dragDepth: 0,
   contentMatches: {},
-  alwaysOnTop: false,
-  viewSize: 'regular',
-  fileSort: 'recent',
-  closeToTray: true,
-  confirmDelete: true,
-  hoverDelay: 'normal',
   selection: [],
   toast: null,
 
   boot: async () => {
-    try {
-      const prefs = await call(api.getPrefs())
-      set({
-        theme: prefs.theme,
-        folderOrder: prefs.folderOrder,
-        folderArt: prefs.folderArt,
-        starred: prefs.starred,
-        openFolder: prefs.openFolder,
-        alwaysOnTop: prefs.alwaysOnTop,
-        viewSize: prefs.viewSize,
-        fileSort: prefs.fileSort,
-        closeToTray: prefs.closeToTray,
-        confirmDelete: prefs.confirmDelete,
-        hoverDelay: prefs.hoverDelay,
-        booted: true
-      })
-      document.body.classList.toggle('compact', prefs.viewSize === 'compact')
-      applyThemeClass(prefs.theme)
-    } catch {
-      set({ booted: true })
-    }
+    const prefs = usePrefs.getState().prefs
+    set({
+      folderOrder: prefs.folderOrder,
+      folderArt: prefs.folderArt,
+      starred: prefs.starred,
+      openFolder: prefs.openFolder,
+      booted: true
+    })
     await useLibrary.getState().refresh()
   },
 
@@ -197,39 +148,8 @@ export const useUI = create<UIState>((set, get) => ({
     toastTimer = setTimeout(() => set({ toast: null }), 2900)
   },
 
-  setTheme: t => {
-    set({ theme: t })
-    applyThemeClass(t)
-    schedulePersist()
-  },
-
   setSearch: s => set({ search: s, contextMenu: null }),
   setContentMatches: m => set({ contentMatches: m }),
-  setAlwaysOnTop: v => {
-    set({ alwaysOnTop: v })
-    schedulePersist()
-  },
-  setViewSize: v => {
-    set({ viewSize: v })
-    document.body.classList.toggle('compact', v === 'compact')
-    schedulePersist()
-  },
-  setFileSort: v => {
-    set({ fileSort: v })
-    schedulePersist()
-  },
-  setCloseToTray: v => {
-    set({ closeToTray: v })
-    schedulePersist()
-  },
-  setConfirmDelete: v => {
-    set({ confirmDelete: v })
-    schedulePersist()
-  },
-  setHoverDelay: v => {
-    set({ hoverDelay: v })
-    schedulePersist()
-  },
   toggleSelect: relPath => {
     const s = get()
     set({
@@ -366,10 +286,4 @@ export function targetFolderForNewItems(): string | null {
   if (s.openFolder && s.openFolder !== 'Unsorted') return s.openFolder
   const first = snap.folders.find(f => !f.virtual)
   return first?.name ?? null
-}
-
-if (typeof window !== 'undefined') {
-  window
-    .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', () => applyThemeClass(useUI.getState().theme))
 }
