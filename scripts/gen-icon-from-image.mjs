@@ -55,10 +55,26 @@ for (let y = 0; y < sh; y++) {
 }
 
 fsSync.mkdirSync(buildDir, { recursive: true })
+const luminance = rgba => {
+  let sum = 0
+  let weight = 0
+  const px = rgba.length / 4
+  for (let i = 0; i < px; i++) {
+    const a = rgba[i * 4 + 3] / 255
+    sum += (0.2126 * rgba[i * 4] + 0.7152 * rgba[i * 4 + 1] + 0.0722 * rgba[i * 4 + 2]) * a
+    weight += a
+  }
+  return weight > 0 ? sum / weight : 0
+}
+const master = resizePremultiplied(canvas, side, 256)
+const srcLum = luminance(canvas)
+const outLum = luminance(master)
+if (srcLum > 8 && (outLum / srcLum < 0.5 || outLum / srcLum > 2)) {
+  throw new Error(`icon resize corrupted brightness (source ${srcLum.toFixed(1)}, output ${outLum.toFixed(1)})`)
+}
 const sizes = [256, 128, 64, 48, 32, 16]
 const entries = sizes.map(size => {
-  const resized = resizePremultiplied(canvas, side, size)
-  const png = encodePng(size, size, resized)
+  const png = encodePng(size, size, size === 256 ? master : resizePremultiplied(canvas, side, size))
   if (size === 16 || size === 256) {
     const debugDir = path.join(root, 'desktop-capture')
     fsSync.mkdirSync(debugDir, { recursive: true })
@@ -69,5 +85,7 @@ const entries = sizes.map(size => {
 })
 
 fsSync.writeFileSync(join(buildDir, 'icon.ico'), packIco(entries))
-fsSync.writeFileSync(join(buildDir, 'icon.png'), encodePng(256, 256, resizePremultiplied(canvas, side, 256)))
+fsSync.writeFileSync(join(buildDir, 'icon.png'), encodePng(256, 256, master))
+fsSync.mkdirSync(join(root, 'resources'), { recursive: true })
+fsSync.copyFileSync(join(buildDir, 'icon.ico'), join(root, 'resources', 'icon.ico'))
 console.log('wrote build/icon.ico and build/icon.png')

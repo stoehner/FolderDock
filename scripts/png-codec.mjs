@@ -177,9 +177,9 @@ export function resizePremultiplied(src, srcSize, dstSize) {
       const am = coverage > 0 ? a / coverage : 0
       out[o + 3] = Math.round(am)
       if (am > 0) {
-        out[o] = Math.round(r / a)
-        out[o + 1] = Math.round(g / a)
-        out[o + 2] = Math.round(b / a)
+        out[o] = Math.round((r * 255) / a)
+        out[o + 1] = Math.round((g * 255) / a)
+        out[o + 2] = Math.round((b * 255) / a)
       } else {
         out[o] = 0
         out[o + 1] = 0
