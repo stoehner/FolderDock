@@ -2,7 +2,7 @@ import type { FileMeta } from '../../../shared/types'
 import { api, formatSize } from '../lib/api'
 import { ico } from '../lib/icons'
 import { useUI } from '../state/ui'
-import { promptDeleteFile, promptDeleteFiles } from '../lib/ops'
+import { promptDeleteFiles } from '../lib/ops'
 
 function iconFor(file: FileMeta): string {
   if (file.kind === 'image') return 'image'
@@ -55,8 +55,7 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
           useUI.getState().openModal({ type: 'rename-file', relPath: file.relPath })
         } else if (e.key === 'Delete') {
           e.preventDefault()
-          if (inSelection && selection.length > 1) promptDeleteFiles([...selection])
-          else promptDeleteFile(file.relPath, file.name)
+          promptDeleteFiles(inSelection && selection.length > 1 ? [...selection] : [file.relPath])
         }
       }}
       onContextMenu={e => {

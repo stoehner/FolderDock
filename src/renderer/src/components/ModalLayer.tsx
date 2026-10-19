@@ -5,9 +5,8 @@ import { useLibrary } from '../state/library'
 import { usePrefs } from '../state/prefs'
 import { useUI } from '../state/ui'
 import { EditorModal } from './Editor'
-import { createFolderOp, moveFileOp, moveFilesOp, renameFileOp, renameFolderOp } from '../lib/ops'
+import { createFolderOp, moveFilesOp, renameFileOp, renameFolderOp } from '../lib/ops'
 import { api, call, errText, folderOfRel } from '../lib/api'
-import { useExcerpts } from '../state/excerpts'
 
 function Head({ icon, title, sub, onClose }: { icon: string; title: string; sub: string; onClose: () => void }) {
   return (
@@ -284,7 +283,7 @@ function MoveFileModal({ relPath }: { relPath: string }) {
               key={f.name}
               className="move-option"
               disabled={f.name === current}
-              onClick={() => void moveFileOp(relPath, f.name)}
+              onClick={() => void moveFilesOp([relPath], f.name)}
             >
               {ico('folder', 'tiny')}
               {f.name}
@@ -554,7 +553,6 @@ function SettingsModal() {
             className="secondary-button"
             onClick={() => {
               void useLibrary.getState().refresh()
-              useExcerpts.getState().invalidate()
               useUI.getState().notify('Library rescanned')
             }}
           >

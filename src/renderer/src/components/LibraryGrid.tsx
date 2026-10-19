@@ -71,9 +71,8 @@ export function computeDisplayFolders(
     .filter(f => (!q && opts.filter === 'all' ? true : f.shown.length > 0 || (q && f.titleMatch)))
 }
 
-export function LibraryGrid() {
+export function useDisplayFolders() {
   const snapshot = useLibrary(s => s.snapshot)
-  const error = useLibrary(s => s.error)
   const search = useUI(s => s.search)
   const filter = useUI(s => s.filter)
   const folderOrder = useUI(s => s.folderOrder)
@@ -81,9 +80,24 @@ export function LibraryGrid() {
   const starred = useUI(s => s.starred)
   const contentMatches = useUI(s => s.contentMatches)
   const fileSort = usePrefs(s => s.prefs.fileSort)
+  return useMemo(
+    () =>
+      snapshot
+        ? computeDisplayFolders(snapshot, { search, filter, folderOrder, folderArt, starred, contentMatches, fileSort })
+        : [],
+    [snapshot, search, filter, folderOrder, folderArt, starred, contentMatches, fileSort]
+  )
+}
+
+export function LibraryGrid() {
+  const snapshot = useLibrary(s => s.snapshot)
+  const error = useLibrary(s => s.error)
+  const search = useUI(s => s.search)
+  const filter = useUI(s => s.filter)
   const openFolder = useUI(s => s.openFolder)
   const previewRelPath = useUI(s => s.previewRelPath)
   const openModal = useUI(s => s.openModal)
+  const folders = useDisplayFolders()
 
   useEffect(() => {
     const q = search.trim()
@@ -118,14 +132,6 @@ export function LibraryGrid() {
       useUI.getState().clearSelection()
     }
   }, [snapshot])
-
-  const folders = useMemo(
-    () =>
-      snapshot
-        ? computeDisplayFolders(snapshot, { search, filter, folderOrder, folderArt, starred, contentMatches, fileSort })
-        : [],
-    [snapshot, search, filter, folderOrder, folderArt, starred, contentMatches, fileSort]
-  )
 
   if (error) {
     return (

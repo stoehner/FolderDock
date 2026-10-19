@@ -66,18 +66,6 @@ export async function renameFileOp(relPath: string, newName: string): Promise<bo
   }
 }
 
-export async function moveFileOp(relPath: string, targetFolder: string): Promise<void> {
-  const ui = useUI.getState()
-  try {
-    const snap = await call(api.moveFile(relPath, targetFolder))
-    useLibrary.getState().apply(snap)
-    ui.closeModal()
-    ui.notify(`Moved into ${targetFolder}`)
-  } catch (e) {
-    ui.notify(adoptError(e), 'error')
-  }
-}
-
 export async function moveFilesOp(relPaths: string[], targetFolder: string): Promise<void> {
   const ui = useUI.getState()
   let moved = 0
@@ -108,18 +96,6 @@ export async function deleteFilesOp(relPaths: string[]): Promise<void> {
   if (useUI.getState().previewRelPath && relPaths.includes(useUI.getState().previewRelPath ?? '')) ui.closePreview()
   useUI.getState().clearSelection()
   ui.notify(`${relPaths.length} file${relPaths.length === 1 ? '' : 's'} moved to the Recycle Bin`)
-}
-
-export async function deleteFileOp(relPath: string): Promise<void> {
-  const ui = useUI.getState()
-  try {
-    const snap = await call(api.deleteFile(relPath))
-    useLibrary.getState().apply(snap)
-    if (useUI.getState().previewRelPath === relPath) ui.closePreview()
-    ui.notify('File moved to the Recycle Bin')
-  } catch (e) {
-    ui.notify(adoptError(e), 'error')
-  }
 }
 
 export type SaveOutcome = 'saved' | 'conflict' | 'invalid-name'
@@ -305,21 +281,6 @@ export function requestCloseEditor(): void {
   })
 }
 
-export function promptDeleteFile(relPath: string, name: string): void {
-  if (!usePrefs.getState().prefs.confirmDelete) {
-    void deleteFileOp(relPath)
-    return
-  }
-  useUI.getState().openModal({
-    type: 'confirm',
-    title: 'Delete document?',
-    subtitle: name,
-    description: 'The file is moved to the Windows Recycle Bin. You can restore it there if needed.',
-    confirmLabel: 'Move to Recycle Bin',
-    onConfirm: () => deleteFileOp(relPath)
-  })
-}
-
 export function promptDeleteFiles(relPaths: string[]): void {
   if (!usePrefs.getState().prefs.confirmDelete) {
     void deleteFilesOp(relPaths)
@@ -329,9 +290,12 @@ export function promptDeleteFiles(relPaths: string[]): void {
   const shown = names.slice(0, 3).join(', ')
   useUI.getState().openModal({
     type: 'confirm',
-    title: `Delete ${relPaths.length} files?`,
-    subtitle: names.length > 3 ? `${shown}, +${names.length - 3} more` : shown,
-    description: 'These files are moved to the Windows Recycle Bin. You can restore them there if needed.',
+    title: relPaths.length === 1 ? 'Delete document?' : `Delete ${relPaths.length} files?`,
+    subtitle: names.length > 3 ? `${shown}, +${names.length - 3} more` : names[0] ?? '',
+    description:
+      relPaths.length === 1
+        ? 'The file is moved to the Windows Recycle Bin. You can restore it there if needed.'
+        : 'These files are moved to the Windows Recycle Bin. You can restore them there if needed.',
     confirmLabel: 'Move to Recycle Bin',
     onConfirm: () => deleteFilesOp(relPaths)
   })

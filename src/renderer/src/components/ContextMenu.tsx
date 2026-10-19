@@ -9,7 +9,7 @@ import {
   copyTextOp,
   createNoteOp,
   openExternalOp,
-  promptDeleteFile,
+  promptDeleteFiles,
   promptDeleteFolder,
   revealOp
 } from '../lib/ops'
@@ -103,7 +103,6 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
   }
   const relPath = menu.relPath
   const meta = snapshot?.folders.flatMap(f => f.files).find(f => f.relPath === relPath)
-  const name = meta?.name ?? relPath.split('/').pop() ?? relPath
   const kind = kindForExt(meta?.ext ?? '')
   const items: Item[] = [
     { label: 'Preview', icon: 'eye', run: () => useUI.getState().openPreview(relPath) },
@@ -121,6 +120,6 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
   if (isTextKind(kind) && !meta?.binary) {
     items.splice(6, 0, { label: 'Copy contents', icon: 'copy', run: () => void copyTextOp(relPath) })
   }
-  items.push({ label: 'Delete file', icon: 'trash', danger: true, run: () => promptDeleteFile(relPath, name) })
+  items.push({ label: 'Delete file', icon: 'trash', danger: true, run: () => promptDeleteFiles([relPath]) })
   return items
 }
