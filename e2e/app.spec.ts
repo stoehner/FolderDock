@@ -631,6 +631,50 @@ test.describe('FolderDock app', () => {
     }
   })
 
+  test('narrowing the window never collapses the grid below two columns', async () => {
+    const world = await launch({ 'A/a.md': 'x', 'B/b.md': 'x', 'C/c.md': 'x' })
+    try {
+      const columnCount = () =>
+        world.page.evaluate<number>(
+          'getComputedStyle(document.querySelector(".library-grid")).gridTemplateColumns.split(" ").length'
+        )
+      const setWidth = (width: number) =>
+        world.app.evaluate(({ BrowserWindow }, w: number) => {
+          const win = BrowserWindow.getAllWindows()[0]
+          if (win) {
+            const b = win.getBounds()
+            win.setBounds({ ...b, width: w })
+          }
+        }, width)
+
+      for (const width of [1300, 1000, 800, 650, 500, 430]) {
+        await setWidth(width)
+        await world.page.waitForTimeout(150)
+        expect(await columnCount(), `default grid at width ${width}`).toBe(2)
+      }
+
+      const expectedByWidth: Record<3 | 4, Record<number, number>> = {
+        3: { 1000: 3, 800: 3, 600: 2, 430: 2 },
+        4: { 1000: 4, 800: 3, 600: 2, 430: 2 }
+      }
+      for (const columns of [3, 4] as const) {
+        await world.page.locator('.footer [aria-label="Open settings"]').click()
+        const settings = world.page.locator('.modal')
+        await expect(settings).toBeVisible()
+        await settings.locator('.theme-choice', { hasText: String(columns) }).click()
+        await settings.locator('.modal-foot .primary-button').click()
+        await expect(world.page.locator(`body.cols-${columns}`)).toHaveCount(1)
+        for (const width of [1000, 800, 600, 430]) {
+          await setWidth(width)
+          await world.page.waitForTimeout(150)
+          expect(await columnCount(), `cols-${columns} grid at width ${width}`).toBe(expectedByWidth[columns][width])
+        }
+      }
+    } finally {
+      await close(world)
+    }
+  })
+
   test('right-click on a folder opens its context menu with recolor and rename', async () => {
     const world = await launch({ 'A/doc.md': 'x' })
     try {

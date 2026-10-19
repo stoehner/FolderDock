@@ -5,7 +5,7 @@ export function Toast() {
   const toast = useUI(s => s.toast)
   if (!toast) return null
   return (
-    <div key={toast.id} className={`toast${toast.kind === 'error' ? ' error' : ''}`} role="status">
+    <div key={toast.id} className={`toast${toast.kind === 'error' ? ' error' : ''}`} role={toast.kind === 'error' ? 'alert' : 'status'}>
       {toast.kind === 'error' ? ico('info') : null}
       {toast.text}
     </div>

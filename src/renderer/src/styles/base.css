@@ -347,6 +347,17 @@ body.cols-3 .library-grid {
 body.cols-4 .library-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+@media (max-width: 850px) {
+  body.cols-4 .library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  body.cols-3 .library-grid,
+  body.cols-4 .library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 body.compact .library-grid {
   zoom: 0.78;
 }
