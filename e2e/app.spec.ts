@@ -378,7 +378,7 @@ test.describe('FolderDock app', () => {
       const settings = world.page.locator('.modal')
       await expect(settings).toBeVisible()
       await settings.locator('.theme-choice', { hasText: 'System' }).click()
-      const scheme = await world.page.evaluate<string>("() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'")
+      const scheme = await world.page.evaluate<string>("matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'")
       await expect(world.page.locator(scheme === 'dark' ? 'body:not(.light)' : 'body.light')).toHaveCount(1)
       await settings.locator('.modal-foot .primary-button').click()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
@@ -581,6 +581,51 @@ test.describe('FolderDock app', () => {
       await confirmModal.locator('.modal-foot .primary-button').click()
       await expect(editor).toBeHidden()
       expect(fsSync.readFileSync(path.join(world.root, 'A', 'note.md'), 'utf8')).toBe('original')
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('closing the side preview restores the previous window width', async () => {
+    const world = await launch({ 'A/note.md': '# T\n\nBody text.' })
+    try {
+      const canWiden = await world.page.evaluate<boolean>('screen.availWidth >= 1140')
+      test.skip(!canWiden, 'display too narrow for the auto-widen behavior')
+      const widthOf = () =>
+        world.app.evaluate(({ BrowserWindow }) => {
+          const win = BrowserWindow.getAllWindows()[0]
+          return win ? win.getBounds().width : 0
+        })
+      const before = await widthOf()
+      const a = world.page.locator('[data-folder="A"]')
+      await a.locator('.folder-scene').click()
+      await a.locator('.file-row', { hasText: 'note.md' }).click()
+      await expect(world.page.locator('.side-preview')).toBeVisible()
+      await expect.poll(widthOf, { timeout: 5000 }).toBeGreaterThan(before + 100)
+      await world.page.locator('.side-close').click()
+      await expect
+        .poll(async () => Math.abs((await widthOf()) - before), { timeout: 5000 })
+        .toBeLessThanOrEqual(4)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('cards per row setting switches grid columns and persists', async () => {
+    const world = await launch({ 'A/a.md': 'x', 'B/b.md': 'x', 'C/c.md': 'x' })
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: '3' }).click()
+      await expect(world.page.locator('body.cols-3')).toHaveCount(1)
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"cardColumns": 3'), {
+          timeout: 5000
+        })
+        .toBe(true)
     } finally {
       await close(world)
     }

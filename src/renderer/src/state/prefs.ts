@@ -3,7 +3,16 @@ import type { Prefs, Theme, ViewSize } from '../../../shared/types'
 import { DEFAULT_PREFS } from '../../../shared/prefs'
 import { api, call } from '../lib/api'
 
-const SETTINGS_KEYS = ['theme', 'alwaysOnTop', 'viewSize', 'fileSort', 'closeToTray', 'confirmDelete', 'hoverDelay'] as const
+const SETTINGS_KEYS = [
+  'theme',
+  'alwaysOnTop',
+  'viewSize',
+  'cardColumns',
+  'fileSort',
+  'closeToTray',
+  'confirmDelete',
+  'hoverDelay'
+] as const
 
 export type Settings = Pick<Prefs, (typeof SETTINGS_KEYS)[number]>
 
@@ -29,6 +38,8 @@ function applyThemeClass(prefs: Prefs): void {
 
 function applyViewSizeClass(prefs: Prefs): void {
   document.body.classList.toggle('compact', prefs.viewSize === 'compact')
+  document.body.classList.toggle('cols-3', prefs.cardColumns === 3)
+  document.body.classList.toggle('cols-4', prefs.cardColumns === 4)
 }
 
 function settingsPatch(prefs: Prefs): Partial<Prefs> {

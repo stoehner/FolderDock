@@ -29,7 +29,8 @@ export const SEND = {
   minimize: 'window:minimize',
   toggleMaximize: 'window:toggleMaximize',
   close: 'window:close',
-  widen: 'window:widen'
+  widen: 'window:widen',
+  narrow: 'window:narrow'
 } as const
 
 export const EVENTS = {

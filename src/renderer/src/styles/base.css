@@ -341,13 +341,14 @@ svg {
   align-items: start;
   gap: 15px 14px;
 }
-body.compact .library-grid {
-  zoom: 0.84;
+body.cols-3 .library-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-@media (max-width: 560px) {
-  .library-grid {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
+body.cols-4 .library-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+body.compact .library-grid {
+  zoom: 0.78;
 }
 .empty {
   grid-column: 1/-1;

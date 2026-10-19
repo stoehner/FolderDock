@@ -14,6 +14,7 @@ export function SettingsModal() {
   const theme = prefs.theme
   const alwaysOnTop = prefs.alwaysOnTop
   const viewSize = prefs.viewSize
+  const cardColumns = prefs.cardColumns
   const fileSort = prefs.fileSort
   const closeToTray = prefs.closeToTray
   const confirmDelete = prefs.confirmDelete
@@ -78,6 +79,32 @@ export function SettingsModal() {
             </button>
             <button className={`theme-choice${viewSize === 'compact' ? ' active' : ''}`} onClick={() => setViewSize('compact')}>
               Compact
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Cards per row</div>
+            <div className="settings-sub">More cards per row shrink each collection card.</div>
+          </div>
+          <div className="theme-choices">
+            <button
+              className={`theme-choice${cardColumns === 2 ? ' active' : ''}`}
+              onClick={() => patch({ cardColumns: 2 })}
+            >
+              2
+            </button>
+            <button
+              className={`theme-choice${cardColumns === 3 ? ' active' : ''}`}
+              onClick={() => patch({ cardColumns: 3 })}
+            >
+              3
+            </button>
+            <button
+              className={`theme-choice${cardColumns === 4 ? ' active' : ''}`}
+              onClick={() => patch({ cardColumns: 4 })}
+            >
+              4
             </button>
           </div>
         </div>

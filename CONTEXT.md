@@ -12,7 +12,7 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - **Shelf**: the dashboard grid of collection cards.
 - **Bridge**: the typed renderer-to-main interface (`FolderDockBridge` in `src/shared/api.ts`, exposed as `window.folderdock`). All cross-process calls go through it.
 - **Channel map**: `src/shared/channels.ts`. The single place that names every IPC channel; preload and the main handlers both read from it.
-- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, fileSort, closeToTray, confirmDelete, hoverDelay. One seam: `boot` / `patch` / `setTheme` / `setViewSize`.
+- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay. One seam: `boot` / `patch` / `setTheme` / `setViewSize`.
 - **Preferences module**: `state/prefs.ts`. Deep module that owns settings hydration, validation-aware persistence, and the DOM consequences (`body.light`, `body.compact`) including the system-theme media listener.
 - **Library view state**: folderOrder, folderArt, starred, openFolder. Persisted preferences that describe a view of the library rather than app behavior. They deliberately live in the session store (`state/ui.ts`), not the preferences module, and are pruned by the main process on scan.
 - **Session state**: everything else in `state/ui.ts` — modals, selection, search, editor, preview, toasts. Never persisted.

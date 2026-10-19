@@ -177,4 +177,17 @@ export function registerIpc(ctx: MainContext): void {
     }
     win.setBounds({ x, y: bounds.y, width: target, height: bounds.height })
   })
+  ipcMain.on(SEND.narrow, (_e, width: unknown) => {
+    const win = ctx.getWindow()
+    if (!win || win.isMaximized() || typeof width !== 'number' || !Number.isFinite(width)) return
+    const bounds = win.getBounds()
+    const target = Math.max(430, Math.min(Math.round(width), bounds.width))
+    if (target >= bounds.width) return
+    const { workArea } = screen.getDisplayMatching(bounds)
+    let x = bounds.x
+    if (x + target > workArea.x + workArea.width) {
+      x = Math.max(workArea.x, workArea.x + workArea.width - target)
+    }
+    win.setBounds({ x, y: bounds.y, width: target, height: bounds.height })
+  })
 }

@@ -49,6 +49,7 @@ const api: FolderDockBridge = {
   toggleMaximize: () => ipcRenderer.send(SEND.toggleMaximize),
   close: () => ipcRenderer.send(SEND.close),
   widen: (width: number) => ipcRenderer.send(SEND.widen, width),
+  narrow: (width: number) => ipcRenderer.send(SEND.narrow, width),
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
   onLibraryChanged: (cb: () => void) => {
     const listener = (): void => cb()

@@ -4,6 +4,8 @@ export type Theme = 'dark' | 'light' | 'system'
 
 export type ViewSize = 'regular' | 'compact'
 
+export type CardColumns = 2 | 3 | 4
+
 export type FileSort = 'recent' | 'name' | 'size'
 
 export type HoverDelay = 'fast' | 'normal' | 'slow'
@@ -48,6 +50,7 @@ export interface Prefs {
   openFolder: string | null
   alwaysOnTop: boolean
   viewSize: ViewSize
+  cardColumns: CardColumns
   fileSort: FileSort
   closeToTray: boolean
   confirmDelete: boolean
