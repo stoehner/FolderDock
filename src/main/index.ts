@@ -69,13 +69,14 @@ async function applyRoot(root: string, opts: { seed?: boolean } = {}): Promise<v
   )
 }
 
+if (process.env.FOLDERDOCK_USER_DATA) {
+  app.setPath('userData', path.resolve(process.env.FOLDERDOCK_USER_DATA))
+}
+
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
-  if (process.env.FOLDERDOCK_USER_DATA) {
-    app.setPath('userData', path.resolve(process.env.FOLDERDOCK_USER_DATA))
-  }
   if (process.env.FOLDERDOCK_SOFTWARE_GPU === '1') {
     app.disableHardwareAcceleration()
   }
