@@ -215,41 +215,37 @@ body.light .context-menu .separator {
 body.light .swatch {
   outline-color: #93a7b5;
 }
-body.light .side-preview {
-  background: #e9eff3f2;
-  border-left-color: #b5c6d2;
+body.light .preview-modal .preview-head {
+  border-color: #cbd7e0;
 }
-body.light .side-preview .side-header {
-  border-color: #00000014;
-}
-body.light .side-preview .side-kicker {
+body.light .preview-modal .preview-kicker {
   color: #44718e;
 }
-body.light .side-preview .side-title {
+body.light .preview-modal .preview-title {
   color: #22303b;
 }
-body.light .side-preview .side-close {
+body.light .preview-modal .preview-close {
   background: #0000000c;
   border-color: #00000022;
   color: #44586a;
 }
-body.light .side-preview .side-info {
-  border-color: #00000010;
+body.light .preview-modal .preview-info {
+  border-color: #cbd7e0;
   color: #5d7386;
 }
-body.light .side-preview .side-pill {
+body.light .preview-modal .preview-pill {
   background: #00000010;
 }
-body.light .side-preview .side-body {
+body.light .preview-modal .preview-body {
   background: #ffffff70;
 }
-body.light .side-preview .side-body .plain-preview {
+body.light .preview-modal .preview-body .plain-preview {
   color: #33424e;
 }
-body.light .side-preview .side-footer {
-  border-color: #00000018;
+body.light .preview-modal .preview-footer {
+  border-color: #cbd7e0;
 }
-body.light .side-preview .side-empty {
+body.light .preview-modal .preview-empty {
   color: #52677a;
 }
 body.light .secondary-button {

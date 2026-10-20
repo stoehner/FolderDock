@@ -103,7 +103,7 @@ export function HoverSummary() {
       </div>
       <div className="peek-name">{target.relPath.split('/').pop()}</div>
       <div className="peek-body">{body}</div>
-      <div className="peek-foot">Click for the full side preview · Drag to take the file</div>
+      <div className="peek-foot">Click for the full preview · Drag to take the file</div>
     </div>
   )
 }

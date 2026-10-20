@@ -330,36 +330,19 @@ svg {
   padding: 18px 22px 26px;
   scrollbar-width: thin;
   scrollbar-color: #49515c #1b2026;
-  transition: margin-right 0.25s ease;
-}
-.app.preview-docked .library-scroll {
-  margin-right: 380px;
 }
 .library-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 15px 14px;
+  zoom: var(--grid-zoom, 1);
 }
 body.cols-3 .library-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 body.cols-4 .library-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-@media (max-width: 850px) {
-  body.cols-4 .library-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 650px) {
-  body.cols-3 .library-grid,
-  body.cols-4 .library-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-body.compact .library-grid {
-  zoom: 0.78;
 }
 .empty {
   grid-column: 1/-1;

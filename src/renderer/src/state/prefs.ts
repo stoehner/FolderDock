@@ -40,6 +40,21 @@ function applyViewSizeClass(prefs: Prefs): void {
   document.body.classList.toggle('compact', prefs.viewSize === 'compact')
   document.body.classList.toggle('cols-3', prefs.cardColumns === 3)
   document.body.classList.toggle('cols-4', prefs.cardColumns === 4)
+  applyGridZoom(prefs)
+}
+
+const CARD_DESIGN_WIDTH = 186
+const CARD_GAP = 14
+const SCROLL_PADDING = 44
+const COMPACT_ZOOM = 0.78
+const MIN_WINDOW_WIDTH = 430
+
+function applyGridZoom(prefs: Prefs): void {
+  const columns = prefs.cardColumns
+  const layoutNeeded = columns * CARD_DESIGN_WIDTH + (columns - 1) * CARD_GAP
+  const available = Math.max(window.innerWidth, MIN_WINDOW_WIDTH) - SCROLL_PADDING
+  const base = prefs.viewSize === 'compact' ? COMPACT_ZOOM : 1
+  document.documentElement.style.setProperty('--grid-zoom', Math.min(base, available / layoutNeeded).toFixed(3))
 }
 
 function settingsPatch(prefs: Prefs): Partial<Prefs> {
@@ -87,6 +102,7 @@ export const usePrefs = create<PrefsState>((set, get) => ({
 }))
 
 if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => applyGridZoom(usePrefs.getState().prefs))
   window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', () => applyThemeClass(usePrefs.getState().prefs))

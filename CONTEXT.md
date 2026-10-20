@@ -13,13 +13,13 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - **Bridge**: the typed renderer-to-main interface (`FolderDockBridge` in `src/shared/api.ts`, exposed as `window.folderdock`). All cross-process calls go through it.
 - **Channel map**: `src/shared/channels.ts`. The single place that names every IPC channel; preload and the main handlers both read from it.
 - **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay. One seam: `boot` / `patch` / `setTheme` / `setViewSize`.
-- **Preferences module**: `state/prefs.ts`. Deep module that owns settings hydration, validation-aware persistence, and the DOM consequences (`body.light`, `body.compact`) including the system-theme media listener.
+- **Preferences module**: `state/prefs.ts`. Deep module that owns settings hydration, validation-aware persistence, and the DOM consequences (`body.light`, `body.compact`, the `--grid-zoom` cards-shrink-to-fit variable) including the system-theme media listener and the window resize listener.
 - **Library view state**: folderOrder, folderArt, starred, openFolder. Persisted preferences that describe a view of the library rather than app behavior. They deliberately live in the session store (`state/ui.ts`), not the preferences module, and are pruned by the main process on scan.
 - **Session state**: everything else in `state/ui.ts` — modals, selection, search, editor, preview, toasts. Never persisted.
 - **Excerpt**: the plain-text summary of a file, shown on paper sheets and hover summaries. Cached per file, keyed by mtime (`state/excerpts.ts`).
 - **Content match**: a search result from inside file contents (`searchContent`), rendered as a snippet on the file row.
 - **Orphan preference**: a persisted entry naming a collection that no longer exists. The main process prunes these during `library:scan` via `prunePrefs`.
-- **Dialog router**: `components/ModalLayer.tsx` maps a `Modal` union member to one module in `components/modals/`. Each dialog is its own module; `modals/kit.tsx` holds Head, Foot, and Toggle.
+- **Dialog router**: `components/ModalLayer.tsx` maps a `Modal` union member to one module in `components/modals/`. Each dialog is its own module; `modals/kit.tsx` holds Head, Foot, and Toggle. The file preview is a separate blocking overlay (`PreviewModal`) driven by `previewRelPath` session state, not a modal-union member; it never resizes the window.
 
 ## Invariants
 

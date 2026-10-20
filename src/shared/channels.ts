@@ -28,9 +28,7 @@ export const SEND = {
   startDrag: 'drag:start',
   minimize: 'window:minimize',
   toggleMaximize: 'window:toggleMaximize',
-  close: 'window:close',
-  widen: 'window:widen',
-  narrow: 'window:narrow'
+  close: 'window:close'
 } as const
 
 export const EVENTS = {

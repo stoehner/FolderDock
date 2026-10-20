@@ -205,7 +205,7 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('hover summary appears after delay and side preview opens on click', async () => {
+  test('hover summary appears after delay and preview modal opens on click', async () => {
     const world = await launch({ 'A/note.md': '# Titled\n\nBody text for the summary tooltip.' })
     try {
       const a = world.page.locator('[data-folder="A"]')
@@ -217,12 +217,12 @@ test.describe('FolderDock app', () => {
       await expect(tip.locator('.peek-name')).toHaveText('note.md')
       await expect(tip.locator('.peek-body')).toContainText('Body text for the summary tooltip')
       await row.click()
-      const side = world.page.locator('.side-preview')
-      await expect(side).toBeVisible()
-      await expect(side.locator('.side-title')).toHaveText('note.md')
-      await expect(side.locator('.markdown-preview')).toContainText('Titled')
-      await side.locator('.side-close').click()
-      await expect(side).toBeHidden()
+      const preview = world.page.locator('.preview-modal')
+      await expect(preview).toBeVisible()
+      await expect(preview.locator('.preview-title')).toHaveText('note.md')
+      await expect(preview.locator('.markdown-preview')).toContainText('Titled')
+      await preview.locator('.preview-close').click()
+      await expect(preview).toBeHidden()
       await expect(a.locator('.folder-scene')).toBeVisible()
     } finally {
       await close(world)
@@ -586,11 +586,9 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('closing the side preview restores the previous window width', async () => {
+  test('opening the preview shows a modal without resizing the window', async () => {
     const world = await launch({ 'A/note.md': '# T\n\nBody text.' })
     try {
-      const canWiden = await world.page.evaluate<boolean>('screen.availWidth >= 1140')
-      test.skip(!canWiden, 'display too narrow for the auto-widen behavior')
       const widthOf = () =>
         world.app.evaluate(({ BrowserWindow }) => {
           const win = BrowserWindow.getAllWindows()[0]
@@ -599,13 +597,36 @@ test.describe('FolderDock app', () => {
       const before = await widthOf()
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      await a.locator('.file-row', { hasText: 'note.md' }).click()
-      await expect(world.page.locator('.side-preview')).toBeVisible()
-      await expect.poll(widthOf, { timeout: 5000 }).toBeGreaterThan(before + 100)
-      await world.page.locator('.side-close').click()
-      await expect
-        .poll(async () => Math.abs((await widthOf()) - before), { timeout: 5000 })
-        .toBeLessThanOrEqual(4)
+      const row = a.locator('.file-row', { hasText: 'note.md' })
+      await row.click()
+      const preview = world.page.locator('.preview-modal')
+      await expect(preview).toBeVisible()
+      expect(await widthOf()).toBe(before)
+      await preview.locator('.preview-close').click()
+      await expect(preview).toBeHidden()
+      expect(await widthOf()).toBe(before)
+
+      await row.click()
+      await expect(preview).toBeVisible()
+      await world.page.waitForTimeout(600)
+      await world.page.locator('.modal-layer').click({ position: { x: 6, y: 6 } })
+      await expect(preview).toBeHidden()
+
+      await row.click()
+      await expect(preview).toBeVisible()
+      await world.page.keyboard.press('Escape')
+      await expect(preview).toBeHidden()
+      expect(await widthOf()).toBe(before)
+
+      await row.click()
+      await expect(preview).toBeVisible()
+      await preview.locator('.primary-button', { hasText: 'Edit' }).click()
+      const editor = world.page.locator('.editor-modal')
+      await expect(editor).toBeVisible()
+      await editor.locator('.exit').click()
+      await expect(editor).toBeHidden()
+      await expect(preview).toBeVisible()
+      expect(await widthOf()).toBe(before)
     } finally {
       await close(world)
     }
@@ -631,13 +652,15 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('narrowing the window never collapses the grid below two columns', async () => {
+  test('cards per row is honored at every window width and cards shrink to fit', async () => {
     const world = await launch({ 'A/a.md': 'x', 'B/b.md': 'x', 'C/c.md': 'x' })
     try {
       const columnCount = () =>
         world.page.evaluate<number>(
           'getComputedStyle(document.querySelector(".library-grid")).gridTemplateColumns.split(" ").length'
         )
+      const cardWidth = () =>
+        world.page.evaluate<number>('document.querySelector(".folder-card").getBoundingClientRect().width')
       const setWidth = (width: number) =>
         world.app.evaluate(({ BrowserWindow }, w: number) => {
           const win = BrowserWindow.getAllWindows()[0]
@@ -653,10 +676,6 @@ test.describe('FolderDock app', () => {
         expect(await columnCount(), `default grid at width ${width}`).toBe(2)
       }
 
-      const expectedByWidth: Record<3 | 4, Record<number, number>> = {
-        3: { 1000: 3, 800: 3, 600: 2, 430: 2 },
-        4: { 1000: 4, 800: 3, 600: 2, 430: 2 }
-      }
       for (const columns of [3, 4] as const) {
         await world.page.locator('.footer [aria-label="Open settings"]').click()
         const settings = world.page.locator('.modal')
@@ -667,9 +686,18 @@ test.describe('FolderDock app', () => {
         for (const width of [1000, 800, 600, 430]) {
           await setWidth(width)
           await world.page.waitForTimeout(150)
-          expect(await columnCount(), `cols-${columns} grid at width ${width}`).toBe(expectedByWidth[columns][width])
+          expect(await columnCount(), `cols-${columns} grid at width ${width}`).toBe(columns)
         }
       }
+
+      await setWidth(1000)
+      await world.page.waitForTimeout(150)
+      const wide = await cardWidth()
+      await setWidth(430)
+      await world.page.waitForTimeout(150)
+      const narrow = await cardWidth()
+      expect(narrow, 'cards shrink as the window narrows').toBeGreaterThan(0)
+      expect(narrow).toBeLessThan(wide)
     } finally {
       await close(world)
     }

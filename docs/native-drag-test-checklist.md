@@ -31,7 +31,7 @@ Automated tests cover the UI and filesystem logic, but true OS drag interactions
 ## C. Edge cases
 
 - [ ] Drag a file onto a collection that already contains a file with the same name → collision-suffixed copy, no overwrite.
-- [ ] Drag while the side preview is open → preview stays consistent; after a self-drop move, the preview follows or closes gracefully.
+- [ ] Preview modal open: the backdrop blocks the shelf, so internal drags are unavailable; move or delete the previewed file elsewhere and the modal closes gracefully.
 - [ ] Drag a very large file (>200 MB) in from Explorer → skipped with a clear reason in the toast.
 - [ ] While a drag is in progress, FolderDock shows the slim bottom hint bar; folder cards highlight on hover.
 - [ ] Keyboard-only: Tab to a file row, press Enter (preview), F2 (rename), Del (delete confirm) — all without the mouse.

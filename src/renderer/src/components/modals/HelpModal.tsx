@@ -14,7 +14,7 @@ export function HelpModal() {
           </p>
           <p>
             Drop files from Explorer onto a collection to copy them in. Drag a sheet onto another collection card to move
-            it between collections. Hover any sheet or row for a quick summary, click for the full side preview, and
+            it between collections. Hover any sheet or row for a quick summary, click to open the preview modal, and
             double-click (or press Edit) to open the text editor.
           </p>
           <h2>Shortcuts</h2>

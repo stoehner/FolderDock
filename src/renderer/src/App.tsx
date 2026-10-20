@@ -9,7 +9,7 @@ import { Toolbar } from './components/Toolbar'
 import { LibraryGrid } from './components/LibraryGrid'
 import { ContextMenu } from './components/ContextMenu'
 import { ModalLayer } from './components/ModalLayer'
-import { SidePreview } from './components/SidePreview'
+import { PreviewModal } from './components/modals/PreviewModal'
 import { HoverSummary } from './components/HoverSummary'
 import { DropHint, Toast } from './components/Toast'
 import { SelectionBar } from './components/SelectionBar'
@@ -17,7 +17,6 @@ import { createNoteOp, chooseImportOp, dropBackgroundOp, requestCloseEditor, sav
 
 export default function App() {
   const booted = useUI(s => s.booted)
-  const previewOpen = useUI(s => s.previewRelPath !== null)
   const libError = useLibrary(s => s.error)
 
   useEffect(() => {
@@ -90,7 +89,7 @@ export default function App() {
 
   return (
     <div
-      className={`app${previewOpen ? ' preview-open' : ''}`}
+      className="app"
       onDragEnter={e => {
         if (Array.from(e.dataTransfer.types).includes('Files')) useUI.getState().dragEnter(e as unknown as DragEvent)
       }}
@@ -155,7 +154,7 @@ export default function App() {
           </button>
         </div>
       </footer>
-      {previewOpen ? <SidePreview /> : null}
+      <PreviewModal />
       <ContextMenu />
       <ModalLayer />
       <Toast />

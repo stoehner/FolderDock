@@ -19,7 +19,6 @@ function kindClass(file: FileMeta): string {
 
 export function FileRow({ file, selected }: { file: FileMeta; selected: boolean }) {
   const openPreview = useUI(s => s.openPreview)
-  const openEditor = useUI(s => s.openEditor)
   const openMenu = useUI(s => s.openMenu)
   const isStarred = useUI(s => s.starred.includes(file.relPath))
   const snippet = useUI(s => s.contentMatches[file.relPath])
@@ -41,10 +40,6 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
           return
         }
         openPreview(file.relPath)
-      }}
-      onDoubleClick={e => {
-        e.stopPropagation()
-        void openEditor(file.relPath)
       }}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {

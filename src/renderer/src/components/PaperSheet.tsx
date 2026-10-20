@@ -29,7 +29,6 @@ export function PaperSheet({
   const excerpt = useExcerpts(s => s.texts[file.relPath])
   const root = useLibrary(s => s.snapshot?.root ?? '')
   const openPreview = useUI(s => s.openPreview)
-  const openEditor = useUI(s => s.openEditor)
   const isImage = file.kind === 'image'
   useEffect(() => {
     if (!isImage) useExcerpts.getState().ensureExcerpt(file.relPath)
@@ -48,10 +47,6 @@ export function PaperSheet({
       aria-label={`${file.name}: drag this sheet out, or press Enter to preview`}
       title={`Drag ${file.name} out · click to preview`}
       onClick={() => openPreview(file.relPath)}
-      onDoubleClick={e => {
-        e.stopPropagation()
-        void openEditor(file.relPath)
-      }}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()

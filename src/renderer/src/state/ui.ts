@@ -57,7 +57,6 @@ interface UIState {
   dragDepth: number
   contentMatches: Record<string, string>
   selection: string[]
-  preWidenWidth: number | null
   toast: { text: string; kind: 'info' | 'error'; id: number } | null
 
   boot: () => Promise<void>
@@ -86,7 +85,6 @@ interface UIState {
   setEditorName: (n: string) => void
   setEditorTab: (t: 'edit' | 'preview') => void
   setMaximized: (m: boolean) => void
-  widen: (width: number) => void
   dragEnter: (e: DragEvent) => void
   dragLeave: () => void
   dragReset: () => void
@@ -128,7 +126,6 @@ export const useUI = create<UIState>((set, get) => ({
   dragDepth: 0,
   contentMatches: {},
   selection: [],
-  preWidenWidth: null,
   toast: null,
 
   boot: async () => {
@@ -219,18 +216,10 @@ export const useUI = create<UIState>((set, get) => ({
 
   openPreview: relPath => {
     set({ previewRelPath: relPath, previewNonce: get().previewNonce + 1, contextMenu: null })
-    if (!get().maximized && window.innerWidth < 1020 && window.screen.availWidth >= 1140) {
-      set({ preWidenWidth: window.innerWidth })
-      api.widen(1040)
-    }
   },
 
   closePreview: () => {
-    const restore = get().preWidenWidth
-    if (restore !== null && !get().maximized && Math.abs(window.innerWidth - 1040) <= 4) {
-      api.narrow(restore)
-    }
-    set({ previewRelPath: null, preWidenWidth: null })
+    set({ previewRelPath: null })
   },
   bumpPreview: () => set({ previewNonce: get().previewNonce + 1 }),
 
@@ -275,9 +264,6 @@ export const useUI = create<UIState>((set, get) => ({
   },
 
   setMaximized: m => set({ maximized: m }),
-  widen: width => {
-    if (!get().maximized) api.widen(width)
-  },
 
   dragEnter: (e: DragEvent) => {
     if (Array.from(e.dataTransfer?.types ?? []).includes('Files')) {

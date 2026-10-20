@@ -51,7 +51,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 **Preview and editing**
 
 - Hover summaries after 250 ms: real content excerpts for text and Markdown, dimensions and size for images and PDFs
-- Click for a side preview panel: sanitized Markdown rendering, plain text, actual images, and PDF pages via a sandboxed pdf.js renderer
+- Click for a preview modal: sanitized Markdown rendering, plain text, actual images, and PDF pages via a sandboxed pdf.js renderer
 - Double-click to edit in the built-in editor with atomic writes, BOM preservation, and conflict detection when the file changed on disk
 
 **Everything else**
@@ -125,7 +125,7 @@ Environment overrides for development and testing:
 ## Testing
 
 - **Unit tests** (Vitest, 35 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, and image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG
-- **End-to-end tests** (Playwright Electron, 14 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, side preview, Unsorted detection, external change watching, theme persistence, and right-click menus
+- **End-to-end tests** (Playwright Electron, 30 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

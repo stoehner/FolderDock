@@ -27,7 +27,7 @@ This folder is your library. Everything you see in FolderDock is a **real file o
 - Grab a visible paper sheet and drag it straight into Explorer or any app that accepts files.
 - Drop files from Explorer onto a collection to copy them in, or onto the shelf background to copy them into the open collection.
 - Drag a file between collections to move it for real.
-- Hover any sheet for a quick summary; click it for the full side preview.
+- Hover any sheet for a quick summary; click it for the full preview modal.
 - Press **Ctrl+F** to search, **Ctrl+N** for a quick note, **Ctrl+S** to save while editing.
 `
 

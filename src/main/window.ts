@@ -26,8 +26,8 @@ export function createWindow(deps: WindowDeps): BrowserWindow {
   const bounds = prefs.windowBounds
   const restoreXY = bounds ? boundsTouchAScreen(bounds.x, bounds.y, bounds.width, bounds.height) : false
   const win = new BrowserWindow({
-    width: bounds?.width ?? 660,
-    height: bounds?.height ?? 890,
+    width: bounds?.width ?? 431,
+    height: bounds?.height ?? 581,
     x: restoreXY ? bounds?.x : undefined,
     y: restoreXY ? bounds?.y : undefined,
     minWidth: 430,
