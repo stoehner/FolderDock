@@ -93,6 +93,17 @@ describe('prefs', () => {
     expect(p.folderArt).toEqual({ b: 'ember' })
     expect(p.starred).toEqual(['ok'])
   })
+  it('accepts new palette ids and custom hexes in folderArt', () => {
+    const p = mergePrefs({ folderArt: { a: 'ocean', b: '#ff8800', c: 'banana', d: '#fff', e: '#12g45z' } })
+    expect(p.folderArt).toEqual({ a: 'ocean', b: '#ff8800' })
+  })
+  it('validates the newFolderArt default-color setting', () => {
+    expect(DEFAULT_PREFS.newFolderArt).toBe('varied')
+    expect(mergePrefs({ newFolderArt: 'ocean' }).newFolderArt).toBe('ocean')
+    expect(mergePrefs({ newFolderArt: '#ff8800' }).newFolderArt).toBe('#ff8800')
+    expect(mergePrefs({ newFolderArt: 'banana' }).newFolderArt).toBe('varied')
+    expect(mergePrefs({}).newFolderArt).toBe('varied')
+  })
   it('prunes orphans after folders disappear', () => {
     const p = { ...DEFAULT_PREFS, folderOrder: ['a', 'b', 'gone'], folderArt: { a: 'slate', gone: 'dusk' }, openFolder: 'gone' }
     const pruned = prunePrefs(p, ['a', 'b'])

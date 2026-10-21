@@ -55,6 +55,7 @@ export interface Prefs {
   closeToTray: boolean
   confirmDelete: boolean
   hoverDelay: HoverDelay
+  newFolderArt: string
 }
 
 export interface TextFileContent {

@@ -69,6 +69,8 @@ interface UIState {
   toggleFolder: (name: string | null) => void
   setOpenFolder: (name: string | null) => void
   setFolderArt: (name: string, art: string) => void
+  unsetFolderArt: (name: string) => void
+  clearFolderArt: () => void
   moveFolderOrder: (source: string, target: string) => void
   rekeyFolder: (oldName: string, newName: string) => void
   toggleStar: (relPath: string) => void
@@ -170,6 +172,18 @@ export const useUI = create<UIState>((set, get) => ({
 
   setFolderArt: (name, art) => {
     set({ folderArt: { ...get().folderArt, [name]: art } })
+    schedulePersist()
+  },
+
+  unsetFolderArt: name => {
+    const folderArt = { ...get().folderArt }
+    delete folderArt[name]
+    set({ folderArt })
+    schedulePersist()
+  },
+
+  clearFolderArt: () => {
+    set({ folderArt: {} })
     schedulePersist()
   },
 

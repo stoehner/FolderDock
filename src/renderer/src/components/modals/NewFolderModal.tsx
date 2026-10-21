@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { artStyles, ART_CYCLE } from '../../lib/art'
+import { usePrefs } from '../../state/prefs'
 import { useUI } from '../../state/ui'
 import { createFolderOp } from '../../lib/ops'
 import { Head, Foot } from './kit'
 
 export function NewFolderModal({ art }: { art: string }) {
+  const newFolderArt = usePrefs(s => s.prefs.newFolderArt)
   const [name, setName] = useState('')
-  const [selected, setSelected] = useState(art)
+  const [selected, setSelected] = useState(newFolderArt !== 'varied' ? newFolderArt : art)
   const [busy, setBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => inputRef.current?.focus(), [])
@@ -43,7 +45,7 @@ export function NewFolderModal({ art }: { art: string }) {
           {ART_CYCLE.map(id => (
             <button
               key={id}
-              className={`swatch${selected === id ? ' selected' : ''}`}
+              className={`swatch small${selected === id ? ' selected' : ''}`}
               style={{ background: artStyles[id]?.art }}
               onClick={() => setSelected(id)}
               title={id}

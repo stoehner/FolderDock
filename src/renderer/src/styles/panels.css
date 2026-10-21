@@ -287,6 +287,42 @@
   display: flex;
   gap: 8px;
   margin-top: 11px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.colors-section {
+  margin-top: 14px;
+}
+.swatch.auto {
+  outline-style: dashed;
+}
+.swatch.custom {
+  background: conic-gradient(from 210deg, #e66465, #f0a24a, #e3d74f, #6fbf6f, #4f9fd8, #8a5fd8, #e66465);
+}
+.swatch.small {
+  height: 18px;
+  width: 18px;
+  border-radius: 6px;
+}
+.swatch-wrap {
+  position: relative;
+  display: inline-block;
+  width: 27px;
+  height: 27px;
+}
+.swatch-wrap.small {
+  width: 18px;
+  height: 18px;
+}
+.swatch-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 .swatch {
   height: 27px;

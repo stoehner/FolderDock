@@ -1,4 +1,5 @@
 import type { Prefs } from './types'
+import { isArtValue, isNewFolderArtValue } from './art-values'
 
 export const DEFAULT_PREFS: Prefs = {
   theme: 'dark',
@@ -14,10 +15,9 @@ export const DEFAULT_PREFS: Prefs = {
   fileSort: 'recent',
   closeToTray: true,
   confirmDelete: true,
-  hoverDelay: 'normal'
+  hoverDelay: 'normal',
+  newFolderArt: 'varied'
 }
-
-const ART_IDS = new Set(['aurora', 'ember', 'dusk', 'glacier', 'verdant', 'slate'])
 
 function strArray(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
@@ -41,7 +41,7 @@ export function mergePrefs(raw: unknown): Prefs {
   const folderArtRaw = (r.folderArt ?? {}) as Record<string, unknown>
   const folderArt: Record<string, string> = {}
   for (const [k, v] of Object.entries(folderArtRaw)) {
-    if (typeof v === 'string' && ART_IDS.has(v)) folderArt[k] = v
+    if (typeof v === 'string' && isArtValue(v)) folderArt[k] = v
   }
   const openFolder = typeof r.openFolder === 'string' ? r.openFolder : null
   return {
@@ -58,7 +58,8 @@ export function mergePrefs(raw: unknown): Prefs {
     fileSort: r.fileSort === 'name' || r.fileSort === 'size' ? r.fileSort : 'recent',
     closeToTray: r.closeToTray === undefined ? true : r.closeToTray === true,
     confirmDelete: r.confirmDelete === undefined ? true : r.confirmDelete === true,
-    hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal'
+    hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal',
+    newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied'
   }
 }
 

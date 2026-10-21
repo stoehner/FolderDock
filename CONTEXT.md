@@ -8,11 +8,12 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - **Root**: the library's directory on disk. Changeable in Settings; overridable for tests with `FOLDERDOCK_ROOT`.
 - **Collection**: a real subfolder of the root, drawn as a glass folder card. The user-facing word for a folder inside the library is always "collection."
 - **Unsorted**: the virtual collection for files sitting loose in the root. It has no folder on disk; its files are the root's loose files. It cannot be renamed, deleted, or reordered.
+- **Art style**: the color treatment of a collection card. Named ids live in `src/shared/art-values.ts` (grouped Classics/Vivid/Deep in `lib/art.ts`); a 6-digit hex value is a custom color, synthesized into a glass gradient by `customArtFor`. Pinned styles live in `folderArt`; unpinned collections follow the name hash or the `newFolderArt` setting.
 - **Paper sheet**: the document-styled preview card on a collection, and the drag-out affordance for one file.
 - **Shelf**: the dashboard grid of collection cards.
 - **Bridge**: the typed renderer-to-main interface (`FolderDockBridge` in `src/shared/api.ts`, exposed as `window.folderdock`). All cross-process calls go through it.
 - **Channel map**: `src/shared/channels.ts`. The single place that names every IPC channel; preload and the main handlers both read from it.
-- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay. One seam: `boot` / `patch` / `setTheme` / `setViewSize`.
+- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay, newFolderArt. One seam: `boot` / `patch` / `setTheme` / `setViewSize` / `resetSettings`.
 - **Preferences module**: `state/prefs.ts`. Deep module that owns settings hydration, validation-aware persistence, and the DOM consequences (`body.light`, `body.compact`, the `--grid-zoom` cards-shrink-to-fit variable) including the system-theme media listener and the window resize listener.
 - **Library view state**: folderOrder, folderArt, starred, openFolder. Persisted preferences that describe a view of the library rather than app behavior. They deliberately live in the session store (`state/ui.ts`), not the preferences module, and are pruned by the main process on scan.
 - **Session state**: everything else in `state/ui.ts` — modals, selection, search, editor, preview, toasts. Never persisted.

@@ -37,7 +37,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 
 **Collections**
 
-- Glass folder cards with six color styles, reorderable by drag handle, renamable and recolorable from the right-click menu
+- Glass folder cards with eighteen color styles in three sections plus a custom color picker, reorderable by drag handle, renamable and recolorable from the right-click menu
 - Open a folder in place with an internal, scrollable file list
 - Files created, renamed, moved, or deleted through real filesystem operations, with destructive actions going to the Windows Recycle Bin
 - Loose files at the library root surface in a built-in Unsorted collection so nothing is ever hidden
@@ -125,7 +125,7 @@ Environment overrides for development and testing:
 ## Testing
 
 - **Unit tests** (Vitest, 35 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, and image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG
-- **End-to-end tests** (Playwright Electron, 30 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, and right-click menus
+- **End-to-end tests** (Playwright Electron, 34 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, restore defaults, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

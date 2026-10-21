@@ -36,6 +36,7 @@ export function computeDisplayFolders(
     filter: FilterKind
     folderOrder: string[]
     folderArt: Record<string, string>
+    newFolderArt: string
     starred: string[]
     contentMatches: Record<string, string>
     fileSort: FileSort
@@ -55,7 +56,7 @@ export function computeDisplayFolders(
   ]
   return ordered
     .map(f => {
-      const art = artFor(f.name, opts.folderArt[f.name])
+      const art = artFor(f.name, opts.folderArt[f.name], opts.newFolderArt !== 'varied' ? opts.newFolderArt : undefined)
       const titleMatch = f.name.toLowerCase().includes(q)
       const sorted = [...f.files].sort((a, b) => compareFiles(a, b, opts.fileSort))
       const shown = sorted.filter(
@@ -77,15 +78,25 @@ export function useDisplayFolders() {
   const filter = useUI(s => s.filter)
   const folderOrder = useUI(s => s.folderOrder)
   const folderArt = useUI(s => s.folderArt)
+  const newFolderArt = usePrefs(s => s.prefs.newFolderArt)
   const starred = useUI(s => s.starred)
   const contentMatches = useUI(s => s.contentMatches)
   const fileSort = usePrefs(s => s.prefs.fileSort)
   return useMemo(
     () =>
       snapshot
-        ? computeDisplayFolders(snapshot, { search, filter, folderOrder, folderArt, starred, contentMatches, fileSort })
+        ? computeDisplayFolders(snapshot, {
+            search,
+            filter,
+            folderOrder,
+            folderArt,
+            newFolderArt,
+            starred,
+            contentMatches,
+            fileSort
+          })
         : [],
-    [snapshot, search, filter, folderOrder, folderArt, starred, contentMatches, fileSort]
+    [snapshot, search, filter, folderOrder, folderArt, newFolderArt, starred, contentMatches, fileSort]
   )
 }
 

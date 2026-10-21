@@ -715,7 +715,7 @@ test.describe('FolderDock app', () => {
       await menu.locator('button', { hasText: 'Change color' }).click()
       const modal = world.page.locator('.modal')
       await expect(modal).toBeVisible()
-      await modal.locator('.swatch').nth(1).click()
+      await modal.locator('.swatch[aria-label="Art style dusk"]').click()
       await modal.locator('.modal-foot .primary-button').click()
       await expect(modal).toBeHidden()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
@@ -739,7 +739,7 @@ test.describe('FolderDock app', () => {
       await card.locator('.folder-scene').click({ button: 'right' })
       await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
       const modal = world.page.locator('.modal')
-      await modal.locator('.swatch').nth(1).click()
+      await modal.locator('.swatch[aria-label="Art style dusk"]').click()
       await modal.locator('.modal-foot .primary-button').click()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
       await expect
@@ -775,6 +775,130 @@ test.describe('FolderDock app', () => {
       await expect(menu).toBeVisible()
       await expect(menu.locator('button', { hasText: 'Preview' })).toBeVisible()
       await expect(menu.locator('button', { hasText: 'Rename' })).toBeVisible()
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('custom color picker persists a hex art value for a collection', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      await card.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+      const modal = world.page.locator('.modal')
+      await expect(modal).toBeVisible()
+      await world.page.locator('input[type="color"]').fill('#ff8800')
+      await expect(card.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
+      await modal.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(() => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"A": "#ff8800"'), {
+          timeout: 5000
+        })
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('auto swatch clears a pinned collection color', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      const openRecolor = async (): Promise<void> => {
+        await card.locator('.folder-scene').click({ button: 'right' })
+        await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+        await expect(world.page.locator('.modal')).toBeVisible()
+      }
+      await openRecolor()
+      await world.page.locator('.modal .swatch[aria-label="Art style dusk"]').click()
+      await world.page.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () =>
+            fsSync.existsSync(prefsFile) && JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).folderArt?.A === 'dusk',
+          { timeout: 5000 }
+        )
+        .toBe(true)
+      await openRecolor()
+      await world.page.locator('.modal .swatch[aria-label="Auto color"]').click()
+      await world.page.locator('.modal-foot .primary-button').click()
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            return Object.keys(JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).folderArt ?? {}).length === 0
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('restore defaults reverts settings and clears pinned colors', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      const card = world.page.locator('[data-folder="A"]')
+      await card.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+      await world.page.locator('.modal .swatch[aria-label="Art style ember"]').click()
+      await world.page.locator('.modal-foot .primary-button').click()
+
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Light' }).click()
+      await expect(world.page.locator('body.light')).toHaveCount(1)
+      await settings.locator('.secondary-button', { hasText: 'Restore…' }).click()
+      const confirm = world.page.locator('.modal', { hasText: 'Restore defaults?' })
+      await expect(confirm).toBeVisible()
+      await confirm.locator('.modal-foot .primary-button').click()
+      await expect(world.page.locator('body.light')).toHaveCount(0)
+      await expect(world.page.locator('.modal', { hasText: 'Settings' })).toBeVisible()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
+            return (
+              p.theme === 'dark' &&
+              p.cardColumns === 2 &&
+              p.newFolderArt === 'varied' &&
+              Object.keys(p.folderArt ?? {}).length === 0
+            )
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('new collection colors setting pins the default for created collections', async () => {
+    const world = await launch()
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.swatch[aria-label="Default style ocean"]').click()
+      await settings.locator('.modal-foot .primary-button').click()
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () => fsSync.existsSync(prefsFile) && fsSync.readFileSync(prefsFile, 'utf8').includes('"newFolderArt": "ocean"'),
+          { timeout: 5000 }
+        )
+        .toBe(true)
+      await world.page.locator('.toolbar .primary-button', { hasText: 'New folder' }).click()
+      await world.page.locator('#folderName').fill('Voyage')
+      await world.page.locator('.modal-foot .primary-button').click()
+      await expect(world.page.locator('[data-folder="Voyage"] .folder-scene')).toHaveAttribute('style', /#3d8ec9/)
     } finally {
       await close(world)
     }

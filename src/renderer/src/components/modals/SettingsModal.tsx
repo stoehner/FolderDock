@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api, call, errText } from '../../lib/api'
+import { ART_CYCLE, artStyles } from '../../lib/art'
 import { useLibrary } from '../../state/library'
 import { usePrefs } from '../../state/prefs'
 import { useUI } from '../../state/ui'
+import { isHexColor } from '../../../../shared/art-values'
+import { ColorPickerSwatch } from '../ColorPickerSwatch'
 import { Head, Foot, Toggle } from './kit'
 
 export function SettingsModal() {
@@ -19,6 +22,7 @@ export function SettingsModal() {
   const closeToTray = prefs.closeToTray
   const confirmDelete = prefs.confirmDelete
   const hoverDelay = prefs.hoverDelay
+  const newFolderArt = prefs.newFolderArt
   const [info, setInfo] = useState<{ version: string; electron: string; overridden: boolean; defaultRoot: string | null } | null>(null)
   useEffect(() => {
     void call(api.appInfo())
@@ -36,6 +40,23 @@ export function SettingsModal() {
     } catch (e) {
       useUI.getState().notify(errText(e), 'error')
     }
+  }
+
+  function restoreDefaults(): void {
+    useUI.getState().openModal({
+      type: 'confirm',
+      title: 'Restore defaults?',
+      subtitle: 'Settings and colors',
+      description:
+        'Restores the default settings and clears every pinned collection color. Your files, library location, favorites, and window size are untouched.',
+      confirmLabel: 'Restore defaults',
+      onConfirm: () => {
+        usePrefs.getState().resetSettings()
+        useUI.getState().clearFolderArt()
+        useUI.getState().notify('Default settings and colors restored')
+        useUI.getState().openModal({ type: 'settings' })
+      }
+    })
   }
 
   return (
@@ -109,6 +130,35 @@ export function SettingsModal() {
           </div>
         </div>
         <div className="settings-row">
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="settings-label">New collection colors</div>
+            <div className="settings-sub">Applied when you create a collection. “Varied” picks by name.</div>
+            <div className="colors" style={{ marginTop: 10 }}>
+              <button
+                className={`theme-choice${newFolderArt === 'varied' ? ' active' : ''}`}
+                onClick={() => patch({ newFolderArt: 'varied' })}
+              >
+                Varied
+              </button>
+              {ART_CYCLE.map(id => (
+                <button
+                  key={id}
+                  className={`swatch small${newFolderArt === id ? ' selected' : ''}`}
+                  style={{ background: artStyles[id]?.art }}
+                  onClick={() => patch({ newFolderArt: id })}
+                  title={id}
+                  aria-label={`Default style ${id}`}
+                />
+              ))}
+              <ColorPickerSwatch
+                small
+                value={isHexColor(newFolderArt) ? newFolderArt : undefined}
+                onPick={hex => patch({ newFolderArt: hex })}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="settings-row">
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">File sort</div>
             <div className="settings-sub">How files order inside every collection.</div>
@@ -173,6 +223,18 @@ export function SettingsModal() {
             }}
           >
             Scan now
+          </button>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Default look</div>
+            <div className="settings-sub">
+              Restore the default settings and clear pinned collection colors. Files, library location, favorites, and
+              window size are untouched.
+            </div>
+          </div>
+          <button className="secondary-button" onClick={restoreDefaults}>
+            Restore…
           </button>
         </div>
         <div className="settings-row">

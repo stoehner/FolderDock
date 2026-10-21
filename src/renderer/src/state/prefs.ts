@@ -11,7 +11,8 @@ const SETTINGS_KEYS = [
   'fileSort',
   'closeToTray',
   'confirmDelete',
-  'hoverDelay'
+  'hoverDelay',
+  'newFolderArt'
 ] as const
 
 export type Settings = Pick<Prefs, (typeof SETTINGS_KEYS)[number]>
@@ -23,6 +24,7 @@ interface PrefsState {
   patch: (partial: Partial<Settings>) => void
   setTheme: (t: Theme) => void
   setViewSize: (v: ViewSize) => void
+  resetSettings: () => void
 }
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null
@@ -98,7 +100,11 @@ export const usePrefs = create<PrefsState>((set, get) => ({
   },
 
   setTheme: t => get().patch({ theme: t }),
-  setViewSize: v => get().patch({ viewSize: v })
+  setViewSize: v => get().patch({ viewSize: v }),
+  resetSettings: () => {
+    const partial = Object.fromEntries(SETTINGS_KEYS.map(key => [key, DEFAULT_PREFS[key]])) as Partial<Settings>
+    get().patch(partial)
+  }
 }))
 
 if (typeof window !== 'undefined') {
