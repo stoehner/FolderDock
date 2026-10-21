@@ -789,8 +789,8 @@ test.describe('FolderDock app', () => {
       const modal = world.page.locator('.modal')
       await expect(modal).toBeVisible()
       await world.page.locator('.modal .swatch[aria-label="Custom color"]').click()
-      await world.page.locator('.hex-input').fill('#ff8800')
-      await world.page.locator('.hex-input').press('Enter')
+      await world.page.locator('.cp-panel .hex-input').fill('#ff8800')
+      await world.page.locator('.cp-panel .hex-apply').click()
       await expect(card.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
       await modal.locator('.modal-foot .primary-button').click()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
@@ -1012,6 +1012,66 @@ test.describe('FolderDock app', () => {
         .toBe(true)
       await world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"]').click({ button: 'right' })
       await expect(world.page.locator('.context-menu button', { hasText: 'Remove from favorites' })).toBeVisible()
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('saved custom colors persist, are reusable, and deleting one never changes collections', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'B/b.md': 'y' })
+    try {
+      const cardA = world.page.locator('.folder-card[data-folder="A"]')
+      const cardB = world.page.locator('.folder-card[data-folder="B"]')
+
+      // pick a custom color for A through the visual picker; it is auto-saved
+      await cardA.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+      await world.page.locator('.modal .swatch[aria-label="Custom color"]').click()
+      const hexField = world.page.locator('.cp-panel .hex-input')
+      await expect(hexField).toHaveValue('#ffffff')
+      await world.page.locator('.cp-panel .cp-square').click({ position: { x: 150, y: 20 } })
+      await expect(hexField).not.toHaveValue('#ffffff')
+      await hexField.fill('#ff8800')
+      await world.page.locator('.cp-panel .hex-apply').click()
+      await expect(world.page.locator('.modal .swatch[aria-label="Saved color #ff8800"]')).toBeVisible()
+      await world.page.locator('.modal .modal-foot .primary-button').click()
+      await expect(cardA.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
+
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
+            return (p.customColors ?? []).includes('#ff8800') && p.folderArt?.A === '#ff8800'
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
+
+      // reuse the saved swatch for B, then delete it from the palette
+      await cardB.locator('.folder-scene').click({ button: 'right' })
+      await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
+      await world.page.locator('.modal .swatch[aria-label="Saved color #ff8800"]').click()
+      await expect(world.page.locator('.modal .swatch[aria-label="Saved color #ff8800"]')).toHaveCount(1)
+      await expect(cardB.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
+      await world.page.locator('.saved-swatch .saved-delete').click()
+      await expect(world.page.locator('.modal .swatch[aria-label="Saved color #ff8800"]')).toHaveCount(0)
+      await world.page.locator('.modal .modal-foot .primary-button').click()
+
+      // deleting the palette entry leaves both collections untouched
+      await expect(cardA.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
+      await expect(cardB.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
+            return (p.customColors ?? []).length === 0 && p.folderArt?.A === '#ff8800' && p.folderArt?.B === '#ff8800'
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
     } finally {
       await close(world)
     }

@@ -13,7 +13,8 @@ const SETTINGS_KEYS = [
   'confirmDelete',
   'hoverDelay',
   'newFolderArt',
-  'backupLocation'
+  'backupLocation',
+  'customColors'
 ] as const
 
 export type Settings = Pick<Prefs, (typeof SETTINGS_KEYS)[number]>

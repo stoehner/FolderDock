@@ -57,6 +57,7 @@ export interface Prefs {
   hoverDelay: HoverDelay
   newFolderArt: string
   backupLocation: string
+  customColors: string[]
 }
 
 export interface TextFileContent {

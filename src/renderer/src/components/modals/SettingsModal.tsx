@@ -68,7 +68,7 @@ export function SettingsModal() {
       title: 'Restore defaults?',
       subtitle: 'Settings and colors',
       description:
-        'Restores the default settings and clears every pinned collection color. Your files, library location, favorites, and window size are untouched.',
+        'Restores the default settings and clears every pinned collection color and saved custom color. Your files, library location, favorites, and window size are untouched.',
       confirmLabel: 'Restore defaults',
       onConfirm: () => {
         usePrefs.getState().resetSettings()
@@ -265,8 +265,8 @@ export function SettingsModal() {
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">Default look</div>
             <div className="settings-sub">
-              Restore the default settings and clear pinned collection colors. Files, library location, favorites, and
-              window size are untouched.
+              Restore the default settings and clear pinned collection colors and saved custom colors. Files, library
+              location, favorites, and window size are untouched.
             </div>
           </div>
           <button className="secondary-button" onClick={restoreDefaults}>

@@ -1,5 +1,7 @@
 import type { Prefs } from './types'
-import { isArtValue, isNewFolderArtValue } from './art-values'
+import { isArtValue, isHexColor, isNewFolderArtValue } from './art-values'
+
+export const MAX_SAVED_COLORS = 24
 
 export const DEFAULT_PREFS: Prefs = {
   theme: 'dark',
@@ -17,7 +19,8 @@ export const DEFAULT_PREFS: Prefs = {
   confirmDelete: true,
   hoverDelay: 'normal',
   newFolderArt: 'varied',
-  backupLocation: 'Z:\\REA-Backups'
+  backupLocation: 'Z:\\REA-Backups',
+  customColors: []
 }
 
 function strArray(v: unknown): string[] {
@@ -62,7 +65,8 @@ export function mergePrefs(raw: unknown): Prefs {
     hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal',
     newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied',
     backupLocation:
-      typeof r.backupLocation === 'string' && r.backupLocation.trim() ? r.backupLocation.trim() : DEFAULT_PREFS.backupLocation
+      typeof r.backupLocation === 'string' && r.backupLocation.trim() ? r.backupLocation.trim() : DEFAULT_PREFS.backupLocation,
+    customColors: [...new Set(strArray(r.customColors).filter(isHexColor))].slice(0, MAX_SAVED_COLORS)
   }
 }
 
