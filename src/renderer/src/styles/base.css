@@ -210,6 +210,31 @@ svg {
   gap: 9px;
   margin-top: 0;
 }
+.dropzone {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px dashed #3d4956;
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #8b98a8;
+  font-size: 11px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: #6ea4c4;
+  color: #d7e6f2;
+  background: rgba(110, 164, 196, 0.1);
+}
+.dropzone .icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
 .search {
   height: 40px;
   display: flex;

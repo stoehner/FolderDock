@@ -272,6 +272,30 @@ body.light .drop-hint-bar {
   border-color: #7fa8c4;
   color: #33566e;
 }
+body.light .dropzone {
+  border-color: #b6c2ce;
+  color: #5a6875;
+  background: rgba(0, 0, 0, 0.025);
+}
+body.light .dropzone:hover,
+body.light .dropzone.drag-over {
+  border-color: #4c8da8;
+  color: #2a4c63;
+  background: rgba(76, 141, 168, 0.1);
+}
+body.light .hex-input {
+  background: #f2f6f9;
+  border-color: #9fb6c6;
+  color: #22313d;
+}
+body.light .hex-apply {
+  background: #dde7ee;
+  border-color: #9fb6c6;
+  color: #2a3d4d;
+}
+body.light .hex-apply:hover:not(:disabled) {
+  background: #cfdee8;
+}
 body.light .file-summary {
   background: #fffffffa;
   border-color: #9fb9cb;

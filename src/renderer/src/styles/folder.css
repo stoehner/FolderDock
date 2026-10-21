@@ -336,6 +336,19 @@
   width: 15px;
   height: 15px;
 }
+.folder-topbtn.star-btn .icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+.folder-topbtn.star-btn.starred {
+  border-color: rgba(255, 203, 92, 0.55);
+  background: rgba(58, 45, 12, 0.6);
+}
+.folder-topbtn.star-btn.starred .icon {
+  opacity: 1;
+  color: #ffd479;
+}
 .folder-grip {
   position: absolute;
   left: 14px;
@@ -518,6 +531,28 @@
   color: #fff;
 }
 .file-row .file-more .icon {
+  width: 15px;
+  height: 15px;
+}
+.file-row .file-star {
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: #7d8a97;
+  padding: 3px;
+  opacity: 0.6;
+  flex: none;
+}
+.file-row .file-star:hover {
+  background: #334350;
+  color: #ffd479;
+  opacity: 1;
+}
+.file-row .file-star.starred {
+  color: #ffd479;
+  opacity: 1;
+}
+.file-row .file-star .icon {
   width: 15px;
   height: 15px;
 }

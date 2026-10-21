@@ -111,7 +111,7 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
     { label: 'Rename', icon: 'rename', run: () => useUI.getState().openModal({ type: 'rename-file', relPath }) },
     { label: 'Move to collection…', icon: 'move', run: () => useUI.getState().openModal({ type: 'move-file', relPath }) },
     {
-      label: useUI.getState().starred.includes(relPath) ? 'Unstar file' : 'Star file',
+      label: useUI.getState().starred.includes(relPath) ? 'Remove from favorites' : 'Add to favorites',
       icon: 'star',
       run: () => useUI.getState().toggleStar(relPath)
     },

@@ -12,7 +12,8 @@ const SETTINGS_KEYS = [
   'closeToTray',
   'confirmDelete',
   'hoverDelay',
-  'newFolderArt'
+  'newFolderArt',
+  'backupLocation'
 ] as const
 
 export type Settings = Pick<Prefs, (typeof SETTINGS_KEYS)[number]>

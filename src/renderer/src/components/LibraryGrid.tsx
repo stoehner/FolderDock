@@ -59,9 +59,12 @@ export function computeDisplayFolders(
       const art = artFor(f.name, opts.folderArt[f.name], opts.newFolderArt !== 'varied' ? opts.newFolderArt : undefined)
       const titleMatch = f.name.toLowerCase().includes(q)
       const sorted = [...f.files].sort((a, b) => compareFiles(a, b, opts.fileSort))
+      const folderStarred = opts.starred.includes(f.name)
       const shown = sorted.filter(
         file =>
-          matchesFilter(file, opts.filter, opts.starred) &&
+          (opts.filter === 'favorites'
+            ? folderStarred || opts.starred.includes(file.relPath)
+            : matchesFilter(file, opts.filter, opts.starred)) &&
           (!q ||
             titleMatch ||
             file.name.toLowerCase().includes(q) ||
@@ -69,7 +72,13 @@ export function computeDisplayFolders(
       )
       return { ...f, art, shown, titleMatch }
     })
-    .filter(f => (!q && opts.filter === 'all' ? true : f.shown.length > 0 || (q && f.titleMatch)))
+    .filter(
+      f =>
+        (!q && opts.filter === 'all') ||
+        f.shown.length > 0 ||
+        (q && f.titleMatch) ||
+        (opts.filter === 'favorites' && !q && opts.starred.includes(f.name))
+    )
 }
 
 export function useDisplayFolders() {
@@ -210,6 +219,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
   const setDraggingFolder = useDrag(s => s.setDraggingFolder)
   const dropTarget = useDrag(s => s.dropTarget)
   const setDropTarget = useDrag(s => s.setDropTarget)
+  const folderStarred = useUI(s => s.starred.includes(folder.name))
   const isDropTarget = dropTarget === folder.name
   const count = folder.files.length
   const opened = isOpen
@@ -222,7 +232,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
       setDropTarget(folder.name)
     } else if (types.includes('Files')) {
       e.preventDefault()
-      e.dataTransfer.dropEffect = 'copy'
+      e.dataTransfer.dropEffect = 'move'
       setDropTarget(folder.name)
     }
   }
@@ -237,6 +247,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
     e.preventDefault()
     e.stopPropagation()
     setDropTarget(null)
+    useUI.getState().dragReset()
     const types = Array.from(e.dataTransfer.types)
     if (types.includes('application/x-folderdock-folder')) {
       const source = e.dataTransfer.getData('application/x-folderdock-folder')
@@ -321,6 +332,18 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
         </div>
       ) : null}
       <div className="folder-actions">
+        <button
+          className={`folder-topbtn star-btn${folderStarred ? ' starred' : ''}`}
+          onClick={e => {
+            e.stopPropagation()
+            useUI.getState().toggleStar(folder.name)
+          }}
+          aria-pressed={folderStarred}
+          aria-label={folderStarred ? `Remove ${folder.name} from favorites` : `Add ${folder.name} to favorites`}
+          title={folderStarred ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {ico('star')}
+        </button>
         <button
           className="folder-topbtn"
           onClick={e => {

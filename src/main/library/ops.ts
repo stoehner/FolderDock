@@ -7,6 +7,7 @@ import { looksBinary } from './binary'
 import { extOf, isTextKind, kindForExt } from '../../shared/kinds'
 import {
   UNSORTED,
+  type BackupResult,
   type ContentMatch,
   type DetailedFileMeta,
   type ImportResult,
@@ -352,9 +353,28 @@ export async function importPaths(root: string, absPaths: string[], targetFolder
         continue
       }
       const target = uniqueName(await listNames(targetDir), path.basename(resolved))
+      const dest = path.join(targetDir, target)
+      const rel = toRelPath(root, dest)
+      const sameVolume = path.parse(resolved).root.toLowerCase() === path.parse(targetDir).root.toLowerCase()
       try {
-        await fsp.copyFile(resolved, path.join(targetDir, target))
-        result.imported.push({ name: target, relPath: toRelPath(root, path.join(targetDir, target)) })
+        if (sameVolume) {
+          await fsp.rename(resolved, dest)
+          result.moved.push({ name: target, relPath: rel })
+        } else {
+          await fsp.copyFile(resolved, dest)
+          let sourceRemoved = false
+          try {
+            await trashPath(resolved)
+            sourceRemoved = true
+          } catch {
+            sourceRemoved = false
+          }
+          if (sourceRemoved) {
+            result.moved.push({ name: target, relPath: rel })
+          } else {
+            result.imported.push({ name: target, relPath: rel })
+          }
+        }
       } catch (err) {
         result.skipped.push({ name: display, reason: describeFsError(err) })
       }
@@ -363,6 +383,50 @@ export async function importPaths(root: string, absPaths: string[], targetFolder
     }
   }
   return result
+}
+
+export async function backupLibrary(root: string, backupBase: string): Promise<BackupResult> {
+  const base = backupBase.trim()
+  if (!base) throw new Error('No backup location is set. Choose one in Settings.')
+  const stamp = new Date()
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  const name = `backup-${stamp.getFullYear()}-${pad(stamp.getMonth() + 1)}-${pad(stamp.getDate())}-${pad(
+    stamp.getHours()
+  )}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}`
+  const destRoot = path.resolve(base, 'FolderDock')
+  let dest = path.join(destRoot, name)
+  let n = 2
+  while (fsSync.existsSync(dest)) {
+    dest = path.join(destRoot, `${name}-${n}`)
+    n += 1
+  }
+  try {
+    await fsp.mkdir(destRoot, { recursive: true })
+  } catch (err) {
+    fail(err)
+  }
+  let files = 0
+  let folders = 0
+  const walk = async (from: string, to: string): Promise<void> => {
+    await fsp.mkdir(to, { recursive: true })
+    for (const entry of await fsp.readdir(from, { withFileTypes: true })) {
+      const src = path.join(from, entry.name)
+      const dst = path.join(to, entry.name)
+      if (entry.isDirectory()) {
+        folders += 1
+        await walk(src, dst)
+      } else if (entry.isFile()) {
+        await fsp.copyFile(src, dst)
+        files += 1
+      }
+    }
+  }
+  try {
+    await walk(root, dest)
+  } catch (err) {
+    fail(err)
+  }
+  return { destination: dest, files, folders }
 }
 
 export async function createNote(

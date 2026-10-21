@@ -104,6 +104,12 @@ describe('prefs', () => {
     expect(mergePrefs({ newFolderArt: 'banana' }).newFolderArt).toBe('varied')
     expect(mergePrefs({}).newFolderArt).toBe('varied')
   })
+  it('validates the backupLocation setting', () => {
+    expect(DEFAULT_PREFS.backupLocation).toBe('Z:\\REA-Backups')
+    expect(mergePrefs({ backupLocation: 'D:\\MyBackups' }).backupLocation).toBe('D:\\MyBackups')
+    expect(mergePrefs({ backupLocation: '   ' }).backupLocation).toBe(DEFAULT_PREFS.backupLocation)
+    expect(mergePrefs({}).backupLocation).toBe(DEFAULT_PREFS.backupLocation)
+  })
   it('prunes orphans after folders disappear', () => {
     const p = { ...DEFAULT_PREFS, folderOrder: ['a', 'b', 'gone'], folderArt: { a: 'slate', gone: 'dusk' }, openFolder: 'gone' }
     const pruned = prunePrefs(p, ['a', 'b'])

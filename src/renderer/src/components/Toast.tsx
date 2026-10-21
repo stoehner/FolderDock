@@ -18,7 +18,7 @@ export function DropHint() {
   return (
     <div className="drop-hint-bar">
       {ico('upload')}
-      <span>Drop onto a collection to copy or move · release anywhere else to cancel</span>
+      <span>Drop onto a collection to move it in · release anywhere else to cancel</span>
     </div>
   )
 }

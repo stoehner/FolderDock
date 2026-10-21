@@ -117,6 +117,20 @@ export function registerIpc(ctx: MainContext): void {
     return res.filePaths[0]
   })
 
+  handle(CHANNELS.chooseBackupFolder, async () => {
+    const win = ctx.getWindow()
+    if (!win) throw new Error('No window is available.')
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Choose the FolderDock backup folder',
+      properties: ['openDirectory', 'createDirectory'],
+      defaultPath: ctx.prefs.get().backupLocation
+    })
+    if (res.canceled || res.filePaths.length === 0) return null
+    return res.filePaths[0]
+  })
+
+  handle(CHANNELS.backupLibrary, async () => ops.backupLibrary(ctx.getRoot(), ctx.prefs.get().backupLocation))
+
   handle(CHANNELS.getPrefs, async () => ctx.prefs.get())
 
   handle(CHANNELS.setPrefs, async (_e, patch: Partial<Prefs>) => {

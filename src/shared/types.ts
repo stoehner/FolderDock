@@ -56,6 +56,7 @@ export interface Prefs {
   confirmDelete: boolean
   hoverDelay: HoverDelay
   newFolderArt: string
+  backupLocation: string
 }
 
 export interface TextFileContent {
@@ -81,6 +82,12 @@ export interface ImportResult {
   imported: { name: string; relPath: string }[]
   moved: { name: string; relPath: string }[]
   skipped: { name: string; reason: string }[]
+}
+
+export interface BackupResult {
+  destination: string
+  files: number
+  folders: number
 }
 
 export interface ContentMatch {

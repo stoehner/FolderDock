@@ -788,7 +788,9 @@ test.describe('FolderDock app', () => {
       await world.page.locator('.context-menu button', { hasText: 'Change color' }).click()
       const modal = world.page.locator('.modal')
       await expect(modal).toBeVisible()
-      await world.page.locator('input[type="color"]').fill('#ff8800')
+      await world.page.locator('.modal .swatch[aria-label="Custom color"]').click()
+      await world.page.locator('.hex-input').fill('#ff8800')
+      await world.page.locator('.hex-input').press('Enter')
       await expect(card.locator('.folder-scene')).toHaveAttribute('style', /#ff8800/)
       await modal.locator('.modal-foot .primary-button').click()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
@@ -899,6 +901,117 @@ test.describe('FolderDock app', () => {
       await world.page.locator('#folderName').fill('Voyage')
       await world.page.locator('.modal-foot .primary-button').click()
       await expect(world.page.locator('[data-folder="Voyage"] .folder-scene')).toHaveAttribute('style', /#3d8ec9/)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('drag hint bar clears after a drop lands on a collection', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'B/b.md': 'y' })
+    try {
+      const dt = await world.page.evaluateHandle(() => {
+        const g = globalThis as unknown as { DataTransfer: new () => { items: { add: (f: File) => void } } }
+        const d = new g.DataTransfer()
+        d.items.add(new File(['x'], 'note.txt'))
+        return d
+      })
+      await world.page.dispatchEvent('.app', 'dragenter', { dataTransfer: dt })
+      await expect(world.page.locator('.drop-hint-bar')).toBeVisible()
+      await world.page.dispatchEvent('[data-folder="A"]', 'drop', { dataTransfer: dt })
+      await expect(world.page.locator('.drop-hint-bar')).toHaveCount(0)
+
+      await world.page.dispatchEvent('.dropzone', 'dragenter', { dataTransfer: dt })
+      await world.page.dispatchEvent('.dropzone', 'dragover', { dataTransfer: dt })
+      await expect(world.page.locator('.dropzone.drag-over')).toHaveCount(1)
+      await expect(world.page.locator('.drop-hint-bar')).toBeVisible()
+      await world.page.dispatchEvent('.dropzone', 'drop', { dataTransfer: dt })
+      await expect(world.page.locator('.dropzone.drag-over')).toHaveCount(0)
+      await expect(world.page.locator('.drop-hint-bar')).toHaveCount(0)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('importing an external file moves it into the collection', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      const src = path.join(world.userData, 'From-Desktop.md')
+      await fsp.writeFile(src, 'moved from outside', 'utf8')
+      const r = (await world.page.evaluate(
+        p => {
+          const b = (globalThis as unknown as { folderdock: { dropFiles: (ps: string[], t: string) => Promise<unknown> } })
+            .folderdock
+          return b.dropFiles([p], 'A')
+        },
+        src
+      )) as { ok: boolean; data: { moved: { name: string; relPath: string }[] } }
+      expect(r.ok).toBe(true)
+      expect(r.data.moved).toHaveLength(1)
+      expect(fsSync.existsSync(src)).toBe(false)
+      expect(fsSync.readFileSync(path.join(world.root, 'A', 'From-Desktop.md'), 'utf8')).toBe('moved from outside')
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('back up now copies the library into a timestamped backup folder', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'B/b.md': 'y' })
+    let backupBase = ''
+    try {
+      backupBase = await fsp.mkdtemp(path.join(os.tmpdir(), 'fd-backup-'))
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await expect(settings.locator('.settings-row', { hasText: 'Backup' })).toContainText('Z:\\REA-Backups')
+      const set = (await world.page.evaluate(
+        b => {
+          const bridge = (globalThis as unknown as {
+            folderdock: { setPrefs: (patch: { backupLocation: string }) => Promise<unknown> }
+          }).folderdock
+          return bridge.setPrefs({ backupLocation: b })
+        },
+        backupBase
+      )) as { ok: boolean }
+      expect(set.ok).toBe(true)
+      await settings.locator('.settings-row', { hasText: 'Backup' }).locator('.primary-button').click()
+      await expect(world.page.locator('.toast')).toContainText('Backed up 2 files to')
+      const base = path.join(backupBase, 'FolderDock')
+      const entries = await fsp.readdir(base)
+      expect(entries).toHaveLength(1)
+      const backupDir = path.join(base, entries[0] ?? '')
+      expect(await fsp.readFile(path.join(backupDir, 'A', 'one.md'), 'utf8')).toBe('x')
+      expect(await fsp.readFile(path.join(backupDir, 'B', 'b.md'), 'utf8')).toBe('y')
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
+    } finally {
+      if (backupBase) await fsp.rm(backupBase, { recursive: true, force: true }).catch(() => undefined)
+      await close(world)
+    }
+  })
+
+  test('favorites: starring files and collections shows them under the Favorites filter', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'B/b.md': 'y' })
+    try {
+      const cardA = world.page.locator('.folder-card[data-folder="A"]')
+      await cardA.locator('.star-btn').click()
+      await cardA.locator('.folder-scene').click()
+      await world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"] .file-star').click()
+      await world.page.locator('.filter-chip', { hasText: 'Favorites' }).click()
+      await expect(world.page.locator('.folder-card[data-folder="A"]')).toBeVisible()
+      await expect(world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"]')).toBeVisible()
+      await expect(world.page.locator('.folder-card[data-folder="B"]')).toHaveCount(0)
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            const s = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).starred ?? []
+            return s.includes('A') && s.includes('A/one.md')
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
+      await world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"]').click({ button: 'right' })
+      await expect(world.page.locator('.context-menu button', { hasText: 'Remove from favorites' })).toBeVisible()
     } finally {
       await close(world)
     }

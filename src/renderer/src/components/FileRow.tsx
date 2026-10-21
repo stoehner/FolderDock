@@ -66,15 +66,24 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
     >
       <span className={`typeicon ${kindClass(file)}`}>{ico(iconFor(file))}</span>
       <div className="file-info">
-        <div className="file-name">
-          {file.name}
-          {isStarred ? ' ★' : ''}
-        </div>
+        <div className="file-name">{file.name}</div>
         <div className="file-meta">
           {formatSize(file.size)} · {new Date(file.mtimeMs).toLocaleDateString()}
         </div>
         {snippet ? <div className="file-snippet">{snippet}</div> : null}
       </div>
+      <button
+        className={`file-star${isStarred ? ' starred' : ''}`}
+        onClick={e => {
+          e.stopPropagation()
+          useUI.getState().toggleStar(file.relPath)
+        }}
+        aria-pressed={isStarred}
+        aria-label={isStarred ? `Remove ${file.name} from favorites` : `Add ${file.name} to favorites`}
+        title={isStarred ? 'Remove from favorites' : 'Add to favorites'}
+      >
+        {ico('star')}
+      </button>
       <button
         className="file-more"
         onClick={e => {

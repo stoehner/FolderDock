@@ -55,8 +55,8 @@ export function RecolorFolderModal({ folder }: { folder: string }) {
           </div>
         ))}
         <p className="helper">
-          Auto follows the name-based color; the rainbow swatch opens the Windows color picker. Colors save instantly
-          and only affect how FolderDock displays the collection.
+          Auto follows the name-based color; the rainbow swatch opens a custom hex entry. Colors save instantly and
+          only affect how FolderDock displays the collection.
         </p>
       </div>
       <Foot>

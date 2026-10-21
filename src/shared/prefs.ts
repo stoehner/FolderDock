@@ -16,7 +16,8 @@ export const DEFAULT_PREFS: Prefs = {
   closeToTray: true,
   confirmDelete: true,
   hoverDelay: 'normal',
-  newFolderArt: 'varied'
+  newFolderArt: 'varied',
+  backupLocation: 'Z:\\REA-Backups'
 }
 
 function strArray(v: unknown): string[] {
@@ -59,7 +60,9 @@ export function mergePrefs(raw: unknown): Prefs {
     closeToTray: r.closeToTray === undefined ? true : r.closeToTray === true,
     confirmDelete: r.confirmDelete === undefined ? true : r.confirmDelete === true,
     hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal',
-    newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied'
+    newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied',
+    backupLocation:
+      typeof r.backupLocation === 'string' && r.backupLocation.trim() ? r.backupLocation.trim() : DEFAULT_PREFS.backupLocation
   }
 }
 

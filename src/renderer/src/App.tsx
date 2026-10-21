@@ -83,6 +83,19 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  useEffect(() => {
+    const reset = (): void => useUI.getState().dragReset()
+    const onDragLeave = (e: DragEvent): void => {
+      if (!e.relatedTarget) reset()
+    }
+    document.addEventListener('drop', reset, true)
+    document.addEventListener('dragleave', onDragLeave, true)
+    return () => {
+      document.removeEventListener('drop', reset, true)
+      document.removeEventListener('dragleave', onDragLeave, true)
+    }
+  }, [])
+
   if (!booted) {
     return <div className="app" />
   }
@@ -94,7 +107,10 @@ export default function App() {
         if (Array.from(e.dataTransfer.types).includes('Files')) useUI.getState().dragEnter(e as unknown as DragEvent)
       }}
       onDragOver={e => {
-        if (Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
+        if (Array.from(e.dataTransfer.types).includes('Files')) {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+        }
       }}
       onDragLeave={e => {
         if (Array.from(e.dataTransfer.types).includes('Files') && !e.relatedTarget) useUI.getState().dragReset()

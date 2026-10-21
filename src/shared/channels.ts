@@ -19,6 +19,8 @@ export const CHANNELS = {
   openFileExternal: 'file:openExternal',
   openRoot: 'root:open',
   chooseRoot: 'root:choose',
+  backupLibrary: 'library:backup',
+  chooseBackupFolder: 'backup:choose',
   getPrefs: 'prefs:get',
   setPrefs: 'prefs:set',
   createNote: 'file:createNote'

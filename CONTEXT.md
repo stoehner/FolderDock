@@ -11,10 +11,13 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - **Art style**: the color treatment of a collection card. Named ids live in `src/shared/art-values.ts` (grouped Classics/Vivid/Deep in `lib/art.ts`); a 6-digit hex value is a custom color, synthesized into a glass gradient by `customArtFor`. Pinned styles live in `folderArt`; unpinned collections follow the name hash or the `newFolderArt` setting.
 - **Paper sheet**: the document-styled preview card on a collection, and the drag-out affordance for one file.
 - **Shelf**: the dashboard grid of collection cards.
+- **Drop zone**: the dashed strip under the toolbar. Dropping files from Explorer there moves them into the library using the same target rule as shelf-background drops (open collection, else first collection, else Unsorted); clicking it opens the import picker.
+- **Favorites**: files and collections the user starred via the star button on a file row or collection card (or the context menu). The Favorites filter shows starred collections in full plus starred files. `starred` holds file relPaths and collection names.
 - **Bridge**: the typed renderer-to-main interface (`FolderDockBridge` in `src/shared/api.ts`, exposed as `window.folderdock`). All cross-process calls go through it.
 - **Channel map**: `src/shared/channels.ts`. The single place that names every IPC channel; preload and the main handlers both read from it.
-- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay, newFolderArt. One seam: `boot` / `patch` / `setTheme` / `setViewSize` / `resetSettings`.
+- **Settings**: persisted user preferences owned by the preferences module (`src/renderer/src/state/prefs.ts`). Fields: theme, alwaysOnTop, viewSize, cardColumns, fileSort, closeToTray, confirmDelete, hoverDelay, newFolderArt, backupLocation. One seam: `boot` / `patch` / `setTheme` / `setViewSize` / `resetSettings`.
 - **Preferences module**: `state/prefs.ts`. Deep module that owns settings hydration, validation-aware persistence, and the DOM consequences (`body.light`, `body.compact`, the `--grid-zoom` cards-shrink-to-fit variable) including the system-theme media listener and the window resize listener.
+- **Backup**: a manual, timestamped folder copy of the whole library into the backup location (the `backupLocation` setting, default `Z:\REA-Backups`), triggered from Settings. Copies only; never deletes or prunes.
 - **Library view state**: folderOrder, folderArt, starred, openFolder. Persisted preferences that describe a view of the library rather than app behavior. They deliberately live in the session store (`state/ui.ts`), not the preferences module, and are pruned by the main process on scan.
 - **Session state**: everything else in `state/ui.ts` — modals, selection, search, editor, preview, toasts. Never persisted.
 - **Excerpt**: the plain-text summary of a file, shown on paper sheets and hover summaries. Cached per file, keyed by mtime (`state/excerpts.ts`).
@@ -26,6 +29,7 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 
 - Files are real on disk under the root, never in app/browser storage.
 - Deleting moves to the Windows Recycle Bin.
+- Importing files from outside the library (drops, the drop zone, the import picker) moves them: same-volume rename when possible, otherwise copy into the library and recycle the source.
 - The UI stays faithful to the glass-folder card design (`docs/reference/FolderDock_Interactive_v2.html`), with the 182px rescaled values in `src/renderer/src/styles/folder.css`.
 - Installers are unsigned; SmartScreen warnings are expected.
 - All IPC channel names come from the channel map; never write a channel string literal elsewhere.

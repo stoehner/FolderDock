@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { FolderDockBridge } from '../shared/api'
 import { CHANNELS, EVENTS, SEND } from '../shared/channels'
 import type {
+  BackupResult,
   ContentMatch,
   DetailedFileMeta,
   ImportResult,
@@ -41,6 +42,8 @@ const api: FolderDockBridge = {
   openFileExternal: (relPath: string) => invoke<void>(CHANNELS.openFileExternal, relPath),
   openRoot: () => invoke<void>(CHANNELS.openRoot),
   chooseRoot: () => invoke<string | null>(CHANNELS.chooseRoot),
+  chooseBackupFolder: () => invoke<string | null>(CHANNELS.chooseBackupFolder),
+  backupLibrary: () => invoke<BackupResult>(CHANNELS.backupLibrary),
   getPrefs: () => invoke<Prefs>(CHANNELS.getPrefs),
   setPrefs: (patch: Partial<Prefs>) => invoke<Prefs>(CHANNELS.setPrefs, patch),
   createNote: (folderName: string, baseName?: string) => invoke<NoteResult>(CHANNELS.createNote, folderName, baseName),

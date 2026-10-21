@@ -10,7 +10,7 @@ FolderDock is designed to sit beside your editor, browser, or notes app as a com
 
 <p align="center">
   <img src="docs/screenshots/shelf-dark.png" width="400" alt="FolderDock shelf in dark theme">
-  <img src="docs/screenshots/side-preview.png" width="510" alt="FolderDock with an open collection and a docked file preview">
+  <img src="docs/screenshots/side-preview.png" width="510" alt="FolderDock with an open collection and the file preview modal">
 </p>
 
 ## Contents
@@ -45,7 +45,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 **Native drag and drop**
 
 - Drag a paper sheet or file row straight into Explorer, an editor, an email, or any app that accepts files. The original always stays in your library
-- Drop files from Explorer onto a collection to copy them in, with automatic collision suffixes for duplicate names
+- Drop files from Explorer onto a collection or the toolbar drop zone to move them into your library, with automatic collision suffixes for duplicate names; the source copy is removed so there is nothing to clean up afterwards
 - Drop a library file onto another collection to move it, or drop it anywhere else to leave it untouched
 
 **Preview and editing**
@@ -56,7 +56,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 
 **Everything else**
 
-- Search and category filters (All, Markdown, Images, PDFs, Starred), starred files, light and dark themes
+- Search and category filters (All, Markdown, Images, PDFs, Favorites) with one-click star buttons on files and collections, manual timestamped library backups to a folder you choose, light and dark themes
 - Filesystem watching keeps the shelf in sync when files change outside the app
 - Configurable library root in Settings, with one-click reveal in File Explorer
 
@@ -124,8 +124,8 @@ Environment overrides for development and testing:
 
 ## Testing
 
-- **Unit tests** (Vitest, 35 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, and image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG
-- **End-to-end tests** (Playwright Electron, 34 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, restore defaults, and right-click menus
+- **Unit tests** (Vitest, 54 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, and image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG
+- **End-to-end tests** (Playwright Electron, 38 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, manual backups, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

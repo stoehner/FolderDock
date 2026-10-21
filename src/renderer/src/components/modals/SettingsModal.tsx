@@ -42,6 +42,26 @@ export function SettingsModal() {
     }
   }
 
+  async function changeBackup(): Promise<void> {
+    try {
+      const p = await call(api.chooseBackupFolder())
+      if (!p) return
+      await call(api.setPrefs({ backupLocation: p }))
+      useUI.getState().notify('Backup location updated')
+    } catch (e) {
+      useUI.getState().notify(errText(e), 'error')
+    }
+  }
+
+  async function backupNow(): Promise<void> {
+    try {
+      const r = await call(api.backupLibrary())
+      useUI.getState().notify(`Backed up ${r.files} file${r.files === 1 ? '' : 's'} to ${r.destination}`)
+    } catch (e) {
+      useUI.getState().notify(errText(e), 'error')
+    }
+  }
+
   function restoreDefaults(): void {
     useUI.getState().openModal({
       type: 'confirm',
@@ -75,6 +95,22 @@ export function SettingsModal() {
             </button>
             <button className="secondary-button" onClick={() => void api.openRoot().catch(() => undefined)}>
               Open
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Backup</div>
+            <div className="settings-sub">
+              {prefs.backupLocation} · manual copies of the whole library, one timestamped folder per backup
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
+            <button className="secondary-button" onClick={() => void changeBackup()}>
+              Change…
+            </button>
+            <button className="primary-button" onClick={() => void backupNow()}>
+              Back up now
             </button>
           </div>
         </div>

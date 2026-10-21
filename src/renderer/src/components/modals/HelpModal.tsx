@@ -13,8 +13,13 @@ export function HelpModal() {
             straight into Explorer or any app that accepts files — the original always stays in your library.
           </p>
           <p>
-            Drop files from Explorer onto a collection to copy them in. Drag a sheet onto another collection card to move
-            it between collections. Hover any sheet or row for a quick summary, click to open the preview modal, and
+            Drop files from Explorer onto a collection, the drop zone under the toolbar, or the shelf background to
+            move them into your library; the source copy is removed, so there is nothing to clean up afterwards. Drag
+            a sheet onto another collection card to move it between collections.
+          </p>
+          <p>
+            Click the star on a file row or a collection card to add it to Favorites, then use the Favorites filter to
+            see them all at once. Hover any sheet or row for a quick summary, click to open the preview modal, and
             double-click (or press Edit) to open the text editor.
           </p>
           <h2>Shortcuts</h2>
@@ -25,8 +30,9 @@ export function HelpModal() {
           </p>
           <h2>Where your files live</h2>
           <p>
-            Your library is a normal Windows folder (default: Documents\FolderDock). You can change it in Settings.
-            Deleting moves files to the Recycle Bin. FolderDock never uploads anything anywhere.
+            Your library is a normal Windows folder (default: Documents\FolderDock). You can change it in Settings, and
+            Back up now copies the whole library into a timestamped folder under your backup location. Deleting moves
+            files to the Recycle Bin. FolderDock never uploads anything anywhere.
           </p>
         </div>
       </div>

@@ -25,8 +25,9 @@ This folder is your library. Everything you see in FolderDock is a **real file o
 
 - Click a frosted folder front to open it in place.
 - Grab a visible paper sheet and drag it straight into Explorer or any app that accepts files.
-- Drop files from Explorer onto a collection to copy them in, or onto the shelf background to copy them into the open collection.
+- Drop files from Explorer onto a collection or the drop zone to move them into your library; the source copy is removed.
 - Drag a file between collections to move it for real.
+- Click the star on a file row or a collection card to add it to Favorites.
 - Hover any sheet for a quick summary; click it for the full preview modal.
 - Press **Ctrl+F** to search, **Ctrl+N** for a quick note, **Ctrl+S** to save while editing.
 `
