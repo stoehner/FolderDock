@@ -187,11 +187,7 @@ export function LibraryGrid() {
   if (openFolder) {
     const pageFolder = snapshot?.folders.find(f => f.name === openFolder)
     if (pageFolder) {
-      return (
-        <div className="library-grid">
-          <CollectionPage folder={pageFolder} />
-        </div>
-      )
+      return <CollectionPage folder={pageFolder} />
     }
   }
 

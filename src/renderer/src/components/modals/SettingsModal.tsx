@@ -17,6 +17,7 @@ export function SettingsModal() {
   const theme = prefs.theme
   const alwaysOnTop = prefs.alwaysOnTop
   const viewSize = prefs.viewSize
+  const fontSize = prefs.fontSize
   const cardColumns = prefs.cardColumns
   const fileSort = prefs.fileSort
   const closeToTray = prefs.closeToTray
@@ -139,6 +140,23 @@ export function SettingsModal() {
             </button>
             <button className={`theme-choice${viewSize === 'compact' ? ' active' : ''}`} onClick={() => setViewSize('compact')}>
               Compact
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Font size</div>
+            <div className="settings-sub">Text size inside a collection page. Medium is the default.</div>
+          </div>
+          <div className="theme-choices">
+            <button className={`theme-choice${fontSize === 'small' ? ' active' : ''}`} onClick={() => patch({ fontSize: 'small' })}>
+              Small
+            </button>
+            <button className={`theme-choice${fontSize === 'medium' ? ' active' : ''}`} onClick={() => patch({ fontSize: 'medium' })}>
+              Medium
+            </button>
+            <button className={`theme-choice${fontSize === 'large' ? ' active' : ''}`} onClick={() => patch({ fontSize: 'large' })}>
+              Large
             </button>
           </div>
         </div>

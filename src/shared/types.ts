@@ -4,6 +4,8 @@ export type Theme = 'dark' | 'light' | 'system'
 
 export type ViewSize = 'regular' | 'compact'
 
+export type FontSize = 'small' | 'medium' | 'large'
+
 export type CardColumns = 2 | 3 | 4
 
 export type FileSort = 'recent' | 'name' | 'size'
@@ -50,6 +52,7 @@ export interface Prefs {
   openFolder: string | null
   alwaysOnTop: boolean
   viewSize: ViewSize
+  fontSize: FontSize
   cardColumns: CardColumns
   fileSort: FileSort
   closeToTray: boolean

@@ -110,6 +110,13 @@ describe('prefs', () => {
     expect(mergePrefs({ backupLocation: '   ' }).backupLocation).toBe(DEFAULT_PREFS.backupLocation)
     expect(mergePrefs({}).backupLocation).toBe(DEFAULT_PREFS.backupLocation)
   })
+  it('validates the fontSize setting', () => {
+    expect(DEFAULT_PREFS.fontSize).toBe('medium')
+    expect(mergePrefs({ fontSize: 'small' }).fontSize).toBe('small')
+    expect(mergePrefs({ fontSize: 'large' }).fontSize).toBe('large')
+    expect(mergePrefs({ fontSize: 'banana' }).fontSize).toBe('medium')
+    expect(mergePrefs({}).fontSize).toBe('medium')
+  })
   it('prunes orphans after folders disappear', () => {
     const p = { ...DEFAULT_PREFS, folderOrder: ['a', 'b', 'gone'], folderArt: { a: 'slate', gone: 'dusk' }, openFolder: 'gone' }
     const pruned = prunePrefs(p, ['a', 'b'])

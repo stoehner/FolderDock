@@ -1215,4 +1215,48 @@ test.describe('FolderDock app', () => {
       await close(world)
     }
   })
+
+  test('font size setting scales the collection page and compact view does not shrink it', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      const rowHeight = () =>
+        world.page.evaluate<number>('document.querySelector(".collection-page .file-row").getBoundingClientRect().height')
+      const medium = await rowHeight()
+
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Compact' }).click()
+      await settings.locator('.modal-foot .primary-button').click()
+      expect(await rowHeight()).toBeGreaterThanOrEqual(medium)
+
+      const prefsFile = path.join(world.userData, 'ui-prefs.json')
+      const pick = async (size: string): Promise<void> => {
+        await world.page.locator('.footer [aria-label="Open settings"]').click()
+        await expect(settings).toBeVisible()
+        await settings.locator('.theme-choice', { hasText: size }).click()
+        await settings.locator('.modal-foot .primary-button').click()
+        await expect
+          .poll(
+            () =>
+              fsSync.existsSync(prefsFile) &&
+              fsSync.readFileSync(prefsFile, 'utf8').includes(`"fontSize": "${size.toLowerCase()}"`),
+            { timeout: 5000 }
+          )
+          .toBe(true)
+      }
+
+      await pick('Large')
+      expect(await rowHeight()).toBeGreaterThan(medium)
+      await pick('Small')
+      expect(await rowHeight()).toBeLessThan(medium)
+      await pick('Medium')
+      expect(Math.abs((await rowHeight()) - medium)).toBeLessThanOrEqual(1)
+    } finally {
+      await close(world)
+    }
+  })
 })

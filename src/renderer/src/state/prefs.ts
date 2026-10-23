@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Prefs, Theme, ViewSize } from '../../../shared/types'
+import type { FontSize, Prefs, Theme, ViewSize } from '../../../shared/types'
 import { DEFAULT_PREFS } from '../../../shared/prefs'
 import { api, call } from '../lib/api'
 
@@ -7,6 +7,7 @@ const SETTINGS_KEYS = [
   'theme',
   'alwaysOnTop',
   'viewSize',
+  'fontSize',
   'cardColumns',
   'fileSort',
   'closeToTray',
@@ -52,6 +53,11 @@ const CARD_GAP = 14
 const SCROLL_PADDING = 44
 const COMPACT_ZOOM = 0.78
 const MIN_WINDOW_WIDTH = 430
+const PAGE_ZOOM: Record<FontSize, number> = { small: 1, medium: 1.1, large: 1.25 }
+
+function applyPageZoom(prefs: Prefs): void {
+  document.documentElement.style.setProperty('--page-zoom', String(PAGE_ZOOM[prefs.fontSize]))
+}
 
 function applyGridZoom(prefs: Prefs): void {
   const columns = prefs.cardColumns
@@ -91,6 +97,7 @@ export const usePrefs = create<PrefsState>((set, get) => ({
     const { prefs } = get()
     applyThemeClass(prefs)
     applyViewSizeClass(prefs)
+    applyPageZoom(prefs)
   },
 
   patch: partial => {
@@ -98,6 +105,7 @@ export const usePrefs = create<PrefsState>((set, get) => ({
     set({ prefs })
     applyThemeClass(prefs)
     applyViewSizeClass(prefs)
+    applyPageZoom(prefs)
     schedulePersist()
   },
 
