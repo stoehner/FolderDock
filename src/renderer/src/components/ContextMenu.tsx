@@ -21,7 +21,9 @@ interface Item {
   run: () => void
 }
 
-const MENU_HEIGHT_ESTIMATE = 380
+const MENU_ITEM_ESTIMATE = 38
+const MENU_CHROME = 14
+const MENU_WIDTH = 200
 
 export function ContextMenu() {
   const menu = useUI(s => s.contextMenu)
@@ -54,10 +56,11 @@ export function ContextMenu() {
   const snapshot = useLibrary.getState().snapshot
   const items = buildItems(menu, snapshot)
 
-  const width = 190
+  const width = MENU_WIDTH
   const x = Math.max(10, Math.min(menu.x, window.innerWidth - width - 10))
-  const flipsUp = menu.y + MENU_HEIGHT_ESTIMATE > window.innerHeight
-  const y = flipsUp ? Math.max(10, menu.y - MENU_HEIGHT_ESTIMATE) : Math.max(10, menu.y)
+  const estimate = items.length * MENU_ITEM_ESTIMATE + MENU_CHROME
+  const flipsUp = menu.y + estimate > window.innerHeight
+  const y = flipsUp ? Math.max(10, menu.y - estimate) : Math.max(10, menu.y)
 
   return (
     <div className="context-menu" role="menu" ref={ref} style={{ left: x, top: y }}>
@@ -105,21 +108,16 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
   const meta = snapshot?.folders.flatMap(f => f.files).find(f => f.relPath === relPath)
   const kind = kindForExt(meta?.ext ?? '')
   const items: Item[] = [
-    { label: 'Preview', icon: 'eye', run: () => useUI.getState().openPreview(relPath) },
     { label: 'Open with default app', icon: 'arrow', run: () => void openExternalOp(relPath) },
-    { label: 'Edit', icon: 'note', run: () => void useUI.getState().openEditor(relPath) },
     { label: 'Rename', icon: 'rename', run: () => useUI.getState().openModal({ type: 'rename-file', relPath }) },
-    { label: 'Move to collection…', icon: 'move', run: () => useUI.getState().openModal({ type: 'move-file', relPath }) },
-    {
-      label: useUI.getState().starred.includes(relPath) ? 'Remove from favorites' : 'Add to favorites',
-      icon: 'star',
-      run: () => useUI.getState().toggleStar(relPath)
-    },
-    { label: 'Reveal in File Explorer', icon: 'folder', run: () => void revealOp(relPath) }
+    { label: 'Move to collection…', icon: 'move', run: () => useUI.getState().openModal({ type: 'move-file', relPath }) }
   ]
   if (isTextKind(kind) && !meta?.binary) {
-    items.splice(6, 0, { label: 'Copy contents', icon: 'copy', run: () => void copyTextOp(relPath) })
+    items.push({ label: 'Copy contents', icon: 'copy', run: () => void copyTextOp(relPath) })
   }
-  items.push({ label: 'Delete file', icon: 'trash', danger: true, run: () => promptDeleteFiles([relPath]) })
+  items.push(
+    { label: 'Reveal in File Explorer', icon: 'folder', run: () => void revealOp(relPath) },
+    { label: 'Delete file', icon: 'trash', danger: true, run: () => promptDeleteFiles([relPath]) }
+  )
   return items
 }

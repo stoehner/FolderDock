@@ -11,6 +11,7 @@ import { usePrefs } from '../state/prefs'
 import type { FileSort } from '../../../shared/types'
 import { FileRow } from './FileRow'
 import { PaperSheet } from './PaperSheet'
+import { CollectionPage } from './CollectionPage'
 import { chooseImportOp, createNoteOp, importDropOp } from '../lib/ops'
 
 export interface DisplayFolder extends FolderSnapshot {
@@ -27,6 +28,26 @@ function matchesFilter(file: FileMeta, filter: FilterKind, starred: string[]): b
   if (filter === 'recent') return Date.now() - file.mtimeMs <= RECENT_WINDOW_MS
   if (filter === 'image') return isImageKind(file.kind)
   return file.kind === filter
+}
+
+export function filterFolderFiles(
+  folder: FolderSnapshot,
+  q: string,
+  filter: FilterKind,
+  starred: string[],
+  contentMatches: Record<string, string>,
+  fileSort: FileSort
+): FileMeta[] {
+  const titleMatch = folder.name.toLowerCase().includes(q)
+  const sorted = [...folder.files].sort((a, b) => compareFiles(a, b, fileSort))
+  const folderStarred = starred.includes(folder.name)
+  return sorted.filter(
+    file =>
+      (filter === 'favorites'
+        ? folderStarred || starred.includes(file.relPath)
+        : matchesFilter(file, filter, starred)) &&
+      (!q || titleMatch || file.name.toLowerCase().includes(q) || contentMatches[file.relPath] !== undefined)
+  )
 }
 
 export function computeDisplayFolders(
@@ -58,18 +79,7 @@ export function computeDisplayFolders(
     .map(f => {
       const art = artFor(f.name, opts.folderArt[f.name], opts.newFolderArt !== 'varied' ? opts.newFolderArt : undefined)
       const titleMatch = f.name.toLowerCase().includes(q)
-      const sorted = [...f.files].sort((a, b) => compareFiles(a, b, opts.fileSort))
-      const folderStarred = opts.starred.includes(f.name)
-      const shown = sorted.filter(
-        file =>
-          (opts.filter === 'favorites'
-            ? folderStarred || opts.starred.includes(file.relPath)
-            : matchesFilter(file, opts.filter, opts.starred)) &&
-          (!q ||
-            titleMatch ||
-            file.name.toLowerCase().includes(q) ||
-            opts.contentMatches[file.relPath] !== undefined)
-      )
+      const shown = filterFolderFiles(f, q, opts.filter, opts.starred, opts.contentMatches, opts.fileSort)
       return { ...f, art, shown, titleMatch }
     })
     .filter(
@@ -153,6 +163,14 @@ export function LibraryGrid() {
     }
   }, [snapshot])
 
+  useEffect(() => {
+    if (!openFolder || !snapshot) return
+    if (!snapshot.folders.some(f => f.name === openFolder)) {
+      useUI.getState().setOpenFolder(null)
+      useUI.getState().notify('That collection is no longer in the library.')
+    }
+  }, [snapshot, openFolder])
+
   if (error) {
     return (
       <div className="library-grid">
@@ -164,6 +182,17 @@ export function LibraryGrid() {
         </div>
       </div>
     )
+  }
+
+  if (openFolder) {
+    const pageFolder = snapshot?.folders.find(f => f.name === openFolder)
+    if (pageFolder) {
+      return (
+        <div className="library-grid">
+          <CollectionPage folder={pageFolder} />
+        </div>
+      )
+    }
   }
 
   if (folders.length === 0) {
@@ -196,7 +225,7 @@ export function LibraryGrid() {
         <FolderCard
           key={f.name}
           folder={f}
-          isOpen={search.trim() ? true : openFolder === f.name}
+          isOpen={search.trim().length > 0}
           previewRelPath={previewRelPath}
         />
       ))}
@@ -213,7 +242,7 @@ interface CardProps {
 }
 
 function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
-  const toggleFolder = useUI(s => s.toggleFolder)
+  const setOpenFolder = useUI(s => s.setOpenFolder)
   const openMenu = useUI(s => s.openMenu)
   const draggingFolder = useDrag(s => s.draggingFolder)
   const setDraggingFolder = useDrag(s => s.setDraggingFolder)
@@ -286,13 +315,13 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
         className={`folder-scene leaf-count-${Math.min(3, folder.shown.length)}`}
         tabIndex={0}
         role="button"
-        aria-label={`${opened ? 'Close' : 'Open'} ${folder.name} collection`}
+        aria-label={`Open ${folder.name} collection`}
         aria-expanded={opened}
-        onClick={() => toggleFolder(folder.name)}
+        onClick={() => setOpenFolder(folder.name)}
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            toggleFolder(folder.name)
+            setOpenFolder(folder.name)
           }
         }}
         style={makeVars(folder.art)}

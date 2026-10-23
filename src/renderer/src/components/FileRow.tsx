@@ -89,7 +89,7 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
         onClick={e => {
           e.stopPropagation()
           const r = e.currentTarget.getBoundingClientRect()
-          openMenu({ kind: 'file', relPath: file.relPath, x: r.right - 190, y: r.bottom + 4 })
+          openMenu({ kind: 'file', relPath: file.relPath, x: r.right - 200, y: r.bottom + 4 })
         }}
         aria-label={`Options for ${file.name}`}
         title="File options"

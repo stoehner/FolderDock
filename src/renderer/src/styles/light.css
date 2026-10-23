@@ -366,3 +366,43 @@ body.light .settings-row .settings-sub {
 body.light .pdf-note {
   color: #5d7588;
 }
+body.light .modal .danger-button,
+body.light .preview-footer .danger-button {
+  color: #a4443c;
+  border-color: #c9a49e;
+}
+body.light .modal .danger-button:hover,
+body.light .preview-footer .danger-button:hover {
+  background: #f2dcd9;
+  color: #8c2f27;
+}
+body.light .page-back {
+  background: #dde6ec;
+  border-color: #b8c8d3;
+  color: #3c5265;
+}
+body.light .page-back:hover {
+  background: #cfdee8;
+  border-color: #4c8da8;
+  color: #1e4560;
+}
+body.light .page-name {
+  color: #22303b;
+}
+body.light .page-count {
+  color: #5d7588;
+}
+body.light .page-empty {
+  background: #dde7ed;
+  color: #465d6f;
+  border-color: #b5c6d2;
+}
+body.light .collection-page .drop-hint {
+  border-color: #b6c2ce;
+  color: #5a6875;
+}
+body.light .collection-page.drag-over .drop-hint {
+  border-color: #4c8da8;
+  color: #2a4c63;
+  background: rgba(76, 141, 168, 0.1);
+}

@@ -130,6 +130,8 @@ export function registerIpc(ctx: MainContext): void {
   })
 
   handle(CHANNELS.backupLibrary, async () => ops.backupLibrary(ctx.getRoot(), ctx.prefs.get().backupLocation))
+  handle(CHANNELS.listBackups, async () => ops.listBackups(ctx.prefs.get().backupLocation))
+  handle(CHANNELS.deleteBackup, async (_e, name: string) => ops.deleteBackup(ctx.prefs.get().backupLocation, name))
 
   handle(CHANNELS.getPrefs, async () => ctx.prefs.get())
 

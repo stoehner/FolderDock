@@ -85,6 +85,7 @@ export async function moveFilesOp(relPaths: string[], targetFolder: string): Pro
 
 export async function deleteFilesOp(relPaths: string[]): Promise<void> {
   const ui = useUI.getState()
+  if (ui.previewRelPath && relPaths.includes(ui.previewRelPath ?? '')) ui.closePreview()
   for (const relPath of relPaths) {
     try {
       const snap = await call(api.deleteFile(relPath))
@@ -93,7 +94,6 @@ export async function deleteFilesOp(relPaths: string[]): Promise<void> {
       ui.notify(adoptError(e), 'error')
     }
   }
-  if (useUI.getState().previewRelPath && relPaths.includes(useUI.getState().previewRelPath ?? '')) ui.closePreview()
   useUI.getState().clearSelection()
   ui.notify(`${relPaths.length} file${relPaths.length === 1 ? '' : 's'} moved to the Recycle Bin`)
 }

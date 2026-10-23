@@ -109,6 +109,9 @@ export function SettingsModal() {
             <button className="secondary-button" onClick={() => void changeBackup()}>
               Change…
             </button>
+            <button className="secondary-button" onClick={() => useUI.getState().openModal({ type: 'backups' })}>
+              Manage…
+            </button>
             <button className="primary-button" onClick={() => void backupNow()}>
               Back up now
             </button>

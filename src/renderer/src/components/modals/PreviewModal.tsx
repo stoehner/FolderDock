@@ -5,7 +5,7 @@ import { ico } from '../../lib/icons'
 import { useExcerpts } from '../../state/excerpts'
 import { useLibrary } from '../../state/library'
 import { useUI } from '../../state/ui'
-import { copyTextOp, openExternalOp, revealOp } from '../../lib/ops'
+import { copyTextOp, openExternalOp, promptDeleteFiles, revealOp } from '../../lib/ops'
 import { renderMarkdown } from '../../lib/markdown'
 import { PdfViewer } from '../PdfViewer'
 
@@ -182,6 +182,13 @@ export function PreviewModal() {
           )}
           <button className="secondary-button" onClick={() => void revealOp(relPath)}>
             {ico('folder')}Reveal
+          </button>
+          <button
+            className="secondary-button danger-button"
+            onClick={() => promptDeleteFiles([relPath])}
+            title="Move this file to the Windows Recycle Bin"
+          >
+            {ico('trash')}Delete
           </button>
           <button className="secondary-button" onClick={closePreview}>
             {ico('x')}Close

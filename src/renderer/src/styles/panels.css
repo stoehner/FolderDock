@@ -704,6 +704,17 @@
   background: #fff;
 }
 
+.modal .danger-button,
+.preview-footer .danger-button {
+  color: #f4aaa3;
+  border-color: #7a4a45;
+}
+.modal .danger-button:hover,
+.preview-footer .danger-button:hover {
+  background: #452a28;
+  color: #ffb3ac;
+}
+
 body.light .pdf-note {
   color: #5d7588;
 }

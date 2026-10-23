@@ -1,4 +1,5 @@
 import type {
+  BackupEntry,
   BackupResult,
   ContentMatch,
   DetailedFileMeta,
@@ -35,6 +36,8 @@ export interface FolderDockBridge {
   chooseRoot(): Promise<IPCResult<string | null>>
   chooseBackupFolder(): Promise<IPCResult<string | null>>
   backupLibrary(): Promise<IPCResult<BackupResult>>
+  listBackups(): Promise<IPCResult<BackupEntry[]>>
+  deleteBackup(name: string): Promise<IPCResult<void>>
   getPrefs(): Promise<IPCResult<Prefs>>
   setPrefs(patch: Partial<Prefs>): Promise<IPCResult<Prefs>>
   startDrag(relPath: string, additionalFiles?: string[]): void

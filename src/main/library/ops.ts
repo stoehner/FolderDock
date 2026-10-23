@@ -7,6 +7,7 @@ import { looksBinary } from './binary'
 import { extOf, isTextKind, kindForExt } from '../../shared/kinds'
 import {
   UNSORTED,
+  type BackupEntry,
   type BackupResult,
   type ContentMatch,
   type DetailedFileMeta,
@@ -31,6 +32,7 @@ const MAX_TEXT_BYTES = 2 * 1024 * 1024
 const MAX_IMPORT_BYTES = 200 * 1024 * 1024
 const MAX_CONTENT_SEARCH_BYTES = 512 * 1024
 const MAX_CONTENT_MATCHES = 100
+const BACKUP_NAME_RE = /^backup-\d{4}-\d{2}-\d{2}-\d{6}(-\d+)?$/
 
 function requireWithin(root: string, relPath: string): string {
   const abs = resolveWithinRoot(root, relPath)
@@ -427,6 +429,69 @@ export async function backupLibrary(root: string, backupBase: string): Promise<B
     fail(err)
   }
   return { destination: dest, files, folders }
+}
+
+function backupRootFor(backupBase: string): string {
+  const base = backupBase.trim()
+  if (!base) throw new Error('No backup location is set. Choose one in Settings.')
+  return path.resolve(base, 'FolderDock')
+}
+
+async function measureBackup(dir: string): Promise<{ sizeBytes: number; fileCount: number } | null> {
+  try {
+    let sizeBytes = 0
+    let fileCount = 0
+    const walk = async (d: string): Promise<void> => {
+      for (const entry of await fsp.readdir(d, { withFileTypes: true })) {
+        const p = path.join(d, entry.name)
+        if (entry.isDirectory()) {
+          await walk(p)
+        } else if (entry.isFile()) {
+          const st = await fsp.stat(p)
+          sizeBytes += st.size
+          fileCount += 1
+        }
+      }
+    }
+    await walk(dir)
+    return { sizeBytes, fileCount }
+  } catch {
+    return null
+  }
+}
+
+export async function listBackups(backupBase: string): Promise<BackupEntry[]> {
+  const destRoot = backupRootFor(backupBase)
+  let entries: fsSync.Dirent[]
+  try {
+    entries = await fsp.readdir(destRoot, { withFileTypes: true })
+  } catch {
+    return []
+  }
+  const out: BackupEntry[] = []
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !BACKUP_NAME_RE.test(entry.name)) continue
+    const dir = path.join(destRoot, entry.name)
+    try {
+      const st = await fsp.stat(dir)
+      const measured = await measureBackup(dir)
+      if (!measured) continue
+      out.push({ name: entry.name, createdAtMs: st.mtimeMs, sizeBytes: measured.sizeBytes, fileCount: measured.fileCount })
+    } catch {
+      /* unreadable backups are skipped */
+    }
+  }
+  return out.sort((a, b) => b.createdAtMs - a.createdAtMs)
+}
+
+export async function deleteBackup(backupBase: string, name: string): Promise<void> {
+  if (!BACKUP_NAME_RE.test(name)) throw new Error('That is not a FolderDock backup.')
+  const destRoot = backupRootFor(backupBase)
+  const dir = path.join(destRoot, name)
+  if (path.dirname(path.resolve(dir)) !== path.resolve(destRoot) || !fsSync.existsSync(dir)) {
+    throw new Error('That backup no longer exists.')
+  }
+  await trashPath(dir)
 }
 
 export async function createNote(

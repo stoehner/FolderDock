@@ -74,8 +74,10 @@ test.describe('FolderDock app', () => {
       await expect(world.page.locator('.folder-card')).toHaveCount(2)
       const research = world.page.locator('[data-folder="Research"]')
       await research.locator('.folder-scene').click()
-      await expect(research.locator('.file-row')).toHaveCount(2)
-      await expect(research.locator('.file-row', { hasText: 'tape.md' })).toBeVisible()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await expect(view.locator('.file-row')).toHaveCount(2)
+      await expect(view.locator('.file-row', { hasText: 'tape.md' })).toBeVisible()
     } finally {
       await close(world)
     }
@@ -87,6 +89,11 @@ test.describe('FolderDock app', () => {
       await world.page.locator('.toolbar .primary-button', { hasText: 'New folder' }).click()
       await world.page.locator('#folderName').fill('Prompts')
       await world.page.locator('.modal-foot .primary-button').click()
+      const createdView = world.page.locator('.collection-page')
+      await expect(createdView).toBeVisible()
+      await expect(createdView.locator('.page-name')).toHaveText('Prompts')
+      await createdView.locator('.page-back').click()
+      await expect(createdView).toHaveCount(0)
       await expect(world.page.locator('.folder-card')).toHaveCount(2)
       expect(fsSync.existsSync(path.join(world.root, 'Prompts'))).toBe(true)
     } finally {
@@ -99,7 +106,9 @@ test.describe('FolderDock app', () => {
     try {
       const notes = world.page.locator('[data-folder="Notes"]')
       await notes.locator('.folder-scene').click()
-      await notes.locator('.folder-topbtn[title="New note"]').click()
+      const notesView = world.page.locator('.collection-page')
+      await expect(notesView).toBeVisible()
+      await notesView.locator('button[aria-label="New note"]').click()
       const editor = world.page.locator('.editor-modal')
       await expect(editor).toBeVisible()
       await editor.locator('.editor-textarea').fill('# Hello E2E\n\nReal file on disk.')
@@ -119,13 +128,15 @@ test.describe('FolderDock app', () => {
     try {
       const research = world.page.locator('[data-folder="Research"]')
       await research.locator('.folder-scene').click()
-      const row = research.locator('.file-row', { hasText: 'old-name.md' })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      const row = view.locator('.file-row', { hasText: 'old-name.md' })
       await row.hover()
       await row.locator('.file-more').click()
       await world.page.locator('.context-menu button', { hasText: 'Rename' }).click()
       await world.page.locator('#renameFileInput').fill('new-name.md')
       await world.page.locator('.modal-foot .primary-button').click()
-      await expect(research.locator('.file-row', { hasText: 'new-name.md' })).toBeVisible()
+      await expect(view.locator('.file-row', { hasText: 'new-name.md' })).toBeVisible()
       expect(fsSync.existsSync(path.join(world.root, 'Research', 'new-name.md'))).toBe(true)
       expect(fsSync.existsSync(path.join(world.root, 'Research', 'old-name.md'))).toBe(false)
     } finally {
@@ -141,12 +152,14 @@ test.describe('FolderDock app', () => {
     try {
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      const row = a.locator('.file-row', { hasText: 'doc.md' })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      const row = view.locator('.file-row', { hasText: 'doc.md' })
       await row.hover()
       await row.locator('.file-more').click()
       await world.page.locator('.context-menu button', { hasText: 'Move to collection' }).click()
       await world.page.locator('.move-option', { hasText: 'B' }).click()
-      await expect(a.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
+      await expect(view.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
       expect(fsSync.existsSync(path.join(world.root, 'B', 'doc.md'))).toBe(true)
       expect(fsSync.existsSync(path.join(world.root, 'A', 'doc.md'))).toBe(false)
     } finally {
@@ -159,12 +172,14 @@ test.describe('FolderDock app', () => {
     try {
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      const row = a.locator('.file-row', { hasText: 'gone.md' })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      const row = view.locator('.file-row', { hasText: 'gone.md' })
       await row.hover()
       await row.locator('.file-more').click()
       await world.page.locator('.context-menu button', { hasText: 'Delete file' }).click()
       await world.page.locator('.modal-foot .primary-button').click()
-      await expect(a.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
+      await expect(view.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
       expect(fsSync.existsSync(path.join(world.root, 'A', 'gone.md'))).toBe(false)
     } finally {
       await close(world)
@@ -210,7 +225,9 @@ test.describe('FolderDock app', () => {
     try {
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      const row = a.locator('.file-row', { hasText: 'note.md' })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      const row = view.locator('.file-row', { hasText: 'note.md' })
       await row.hover()
       const tip = world.page.locator('.file-summary')
       await expect(tip).toBeVisible({ timeout: 5000 })
@@ -223,7 +240,7 @@ test.describe('FolderDock app', () => {
       await expect(preview.locator('.markdown-preview')).toContainText('Titled')
       await preview.locator('.preview-close').click()
       await expect(preview).toBeHidden()
-      await expect(a.locator('.folder-scene')).toBeVisible()
+      await expect(view).toBeVisible()
     } finally {
       await close(world)
     }
@@ -418,15 +435,16 @@ test.describe('FolderDock app', () => {
       const past = new Date(Date.now() - 86_400_000)
       await fsp.utimes(path.join(world.root, 'A', 'aaa-old.md'), past, past)
       await world.page.locator('[data-folder="A"] .folder-scene').click()
-      const firstRow = world.page.locator('[data-folder="A"] .file-row').first()
-      await expect(firstRow).toContainText('zzz-new.md')
+      const sortView = world.page.locator('.collection-page')
+      await expect(sortView).toBeVisible()
+      await expect(sortView.locator('.file-row').first()).toContainText('zzz-new.md')
       await world.page.locator('.footer [aria-label="Open settings"]').click()
       const settings = world.page.locator('.modal')
       await expect(settings).toBeVisible()
       await settings.locator('.theme-choice', { hasText: 'Name' }).click()
       await settings.locator('.modal-foot .primary-button').click()
       await expect(settings).toBeHidden()
-      await expect(world.page.locator('[data-folder="A"] .file-row').first()).toContainText('aaa-old.md')
+      await expect(sortView.locator('.file-row').first()).toContainText('aaa-old.md')
     } finally {
       await close(world)
     }
@@ -495,26 +513,31 @@ test.describe('FolderDock app', () => {
     try {
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      await a.locator('.file-row[data-file="A/one.md"]').click({ modifiers: ['Control'] })
-      await a.locator('.file-row[data-file="A/two.md"]').click({ modifiers: ['Control'] })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await view.locator('.file-row[data-file="A/one.md"]').click({ modifiers: ['Control'] })
+      await view.locator('.file-row[data-file="A/two.md"]').click({ modifiers: ['Control'] })
       await expect(world.page.locator('.selection-bar')).toContainText('2 selected')
       await world.page.locator('.selection-bar button', { hasText: 'Move to collection' }).click()
       await world.page.locator('.move-option', { hasText: 'B' }).click()
       await expect(world.page.locator('.selection-bar')).toHaveCount(0, { timeout: 15_000 })
-      await expect(a.locator('.file-row')).toHaveCount(1)
+      await expect(view.locator('.file-row')).toHaveCount(1)
       expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(true)
       expect(fsSync.existsSync(path.join(world.root, 'B', 'two.md'))).toBe(true)
       expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(false)
 
+      await view.locator('.page-back').click()
       const b = world.page.locator('[data-folder="B"]')
       await b.locator('.folder-scene').click()
-      await b.locator('.file-row[data-file="B/one.md"]').click({ modifiers: ['Control'] })
-      await b.locator('.file-row[data-file="B/two.md"]').click({ modifiers: ['Control'] })
+      const bView = world.page.locator('.collection-page')
+      await expect(bView.locator('.page-name')).toHaveText('B')
+      await bView.locator('.file-row[data-file="B/one.md"]').click({ modifiers: ['Control'] })
+      await bView.locator('.file-row[data-file="B/two.md"]').click({ modifiers: ['Control'] })
       await expect(world.page.locator('.selection-bar')).toContainText('2 selected')
       await world.page.locator('.selection-bar button', { hasText: 'Delete' }).click()
       await expect(world.page.locator('.modal', { hasText: 'Delete 2 files?' })).toBeVisible()
       await world.page.locator('.modal-foot .primary-button').click()
-      await expect(b.locator('.file-row')).toHaveCount(1, { timeout: 15_000 })
+      await expect(bView.locator('.file-row')).toHaveCount(1, { timeout: 15_000 })
       expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(false)
       expect(fsSync.existsSync(path.join(world.root, 'B', 'two.md'))).toBe(false)
       expect(fsSync.existsSync(path.join(world.root, 'B', 'keep.md'))).toBe(true)
@@ -555,11 +578,13 @@ test.describe('FolderDock app', () => {
         .toBe(true)
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      const row = a.locator('.file-row', { hasText: 'quick.md' })
+      const quickView = world.page.locator('.collection-page')
+      await expect(quickView).toBeVisible()
+      const row = quickView.locator('.file-row', { hasText: 'quick.md' })
       await row.hover()
       await row.locator('.file-more').click()
       await world.page.locator('.context-menu button', { hasText: 'Delete file' }).click()
-      await expect(a.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
+      await expect(quickView.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
       expect(fsSync.existsSync(path.join(world.root, 'A', 'quick.md'))).toBe(false)
     } finally {
       await close(world)
@@ -571,7 +596,9 @@ test.describe('FolderDock app', () => {
     try {
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      await a.locator('.file-row', { hasText: 'note.md' }).dblclick()
+      const guardView = world.page.locator('.collection-page')
+      await expect(guardView).toBeVisible()
+      await guardView.locator('.file-row', { hasText: 'note.md' }).dblclick()
       const editor = world.page.locator('.editor-modal')
       await expect(editor).toBeVisible()
       await editor.locator('.editor-textarea').fill('changed content')
@@ -597,7 +624,9 @@ test.describe('FolderDock app', () => {
       const before = await widthOf()
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
-      const row = a.locator('.file-row', { hasText: 'note.md' })
+      const resizeView = world.page.locator('.collection-page')
+      await expect(resizeView).toBeVisible()
+      const row = resizeView.locator('.file-row', { hasText: 'note.md' })
       await row.click()
       const preview = world.page.locator('.preview-modal')
       await expect(preview).toBeVisible()
@@ -770,11 +799,15 @@ test.describe('FolderDock app', () => {
     try {
       const card = world.page.locator('[data-folder="A"]')
       await card.locator('.folder-scene').click()
-      await card.locator('.file-row', { hasText: 'doc.md' }).click({ button: 'right' })
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await view.locator('.file-row', { hasText: 'doc.md' }).click({ button: 'right' })
       const menu = world.page.locator('.context-menu')
       await expect(menu).toBeVisible()
-      await expect(menu.locator('button', { hasText: 'Preview' })).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Open with default app' })).toBeVisible()
       await expect(menu.locator('button', { hasText: 'Rename' })).toBeVisible()
+      await expect(menu.locator('button', { hasText: 'Preview' })).toHaveCount(0)
+      await expect(menu.locator('button', { hasText: 'favorites' })).toHaveCount(0)
     } finally {
       await close(world)
     }
@@ -900,6 +933,9 @@ test.describe('FolderDock app', () => {
       await world.page.locator('.toolbar .primary-button', { hasText: 'New folder' }).click()
       await world.page.locator('#folderName').fill('Voyage')
       await world.page.locator('.modal-foot .primary-button').click()
+      const voyageView = world.page.locator('.collection-page')
+      await expect(voyageView).toBeVisible()
+      await voyageView.locator('.page-back').click()
       await expect(world.page.locator('[data-folder="Voyage"] .folder-scene')).toHaveAttribute('style', /#3d8ec9/)
     } finally {
       await close(world)
@@ -994,11 +1030,11 @@ test.describe('FolderDock app', () => {
       const cardA = world.page.locator('.folder-card[data-folder="A"]')
       await cardA.locator('.star-btn').click()
       await cardA.locator('.folder-scene').click()
-      await world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"] .file-star').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view.locator('.page-name')).toHaveText('A')
+      await view.locator('.file-row[data-file="A/one.md"] .file-star').click()
       await world.page.locator('.filter-chip', { hasText: 'Favorites' }).click()
-      await expect(world.page.locator('.folder-card[data-folder="A"]')).toBeVisible()
-      await expect(world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"]')).toBeVisible()
-      await expect(world.page.locator('.folder-card[data-folder="B"]')).toHaveCount(0)
+      await expect(view.locator('.file-row[data-file="A/one.md"]')).toBeVisible()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
       await expect
         .poll(
@@ -1010,8 +1046,17 @@ test.describe('FolderDock app', () => {
           { timeout: 5000 }
         )
         .toBe(true)
-      await world.page.locator('.folder-card[data-folder="A"] .file-row[data-file="A/one.md"]').click({ button: 'right' })
-      await expect(world.page.locator('.context-menu button', { hasText: 'Remove from favorites' })).toBeVisible()
+      await view.locator('.file-row[data-file="A/one.md"] .file-star').click()
+      await expect
+        .poll(
+          () => {
+            if (!fsSync.existsSync(prefsFile)) return false
+            const s = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).starred ?? []
+            return s.includes('A') && !s.includes('A/one.md')
+          },
+          { timeout: 5000 }
+        )
+        .toBe(true)
     } finally {
       await close(world)
     }
@@ -1073,6 +1118,100 @@ test.describe('FolderDock app', () => {
         )
         .toBe(true)
     } finally {
+      await close(world)
+    }
+  })
+
+  test('clicking a folder card opens the collection page and back or Escape returns to the shelf', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'A/two.md': 'y', 'B/b.md': 'z' })
+    try {
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await expect(view.locator('.page-name')).toHaveText('A')
+      await expect(view.locator('.page-count')).toContainText('2 files')
+      await expect(view.locator('.file-row')).toHaveCount(2)
+      await world.page.locator('#searchInput').fill('two')
+      await expect(view.locator('.file-row')).toHaveCount(1)
+      await expect(view.locator('.file-row', { hasText: 'two.md' })).toBeVisible()
+      await world.page.locator('#searchInput').fill('')
+      await expect(view.locator('.file-row')).toHaveCount(2)
+      await view.locator('.page-back').click()
+      await expect(view).toHaveCount(0)
+      await expect(world.page.locator('.folder-card')).toHaveCount(2)
+      await world.page.locator('[data-folder="B"] .folder-scene').click()
+      await expect(world.page.locator('.collection-page .page-name')).toHaveText('B')
+      await world.page.keyboard.press('Escape')
+      await expect(world.page.locator('.collection-page')).toHaveCount(0)
+      await expect(world.page.locator('.folder-card')).toHaveCount(2)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('deleting from the live preview moves the file to the Recycle Bin and closes the preview', async () => {
+    const world = await launch({ 'A/doomed.md': 'delete me from the preview' })
+    try {
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await view.locator('.file-row', { hasText: 'doomed.md' }).click()
+      const preview = world.page.locator('.preview-modal')
+      await expect(preview).toBeVisible()
+      await preview.locator('.danger-button', { hasText: 'Delete' }).click()
+      const confirm = world.page.locator('.modal', { hasText: 'Delete document?' })
+      await expect(confirm).toBeVisible()
+      await confirm.locator('.modal-foot .primary-button').click()
+      await expect(preview).toBeHidden()
+      await expect(view.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'doomed.md'))).toBe(false)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('manage backups lists, creates, and deletes backups', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    let backupBase = ''
+    try {
+      backupBase = await fsp.mkdtemp(path.join(os.tmpdir(), 'fd-manage-backup-'))
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      const set = (await world.page.evaluate(
+        b => {
+          const bridge = (globalThis as unknown as {
+            folderdock: { setPrefs: (patch: { backupLocation: string }) => Promise<unknown> }
+          }).folderdock
+          return bridge.setPrefs({ backupLocation: b })
+        },
+        backupBase
+      )) as { ok: boolean }
+      expect(set.ok).toBe(true)
+      await settings
+        .locator('.settings-row', { hasText: 'Backup' })
+        .locator('.secondary-button', { hasText: 'Manage…' })
+        .click()
+      const manage = world.page.locator('.modal[aria-label="Backups"]')
+      await expect(manage).toBeVisible()
+      await expect(manage.locator('.helper')).toContainText('No backups yet')
+      await manage.locator('.primary-button', { hasText: 'Back up now' }).click()
+      await expect(world.page.locator('.toast')).toContainText('Backed up 1 file to')
+      await expect(manage.locator('.settings-row', { hasText: 'backup-' })).toHaveCount(1)
+      await manage.locator('.primary-button', { hasText: 'Back up now' }).click()
+      await expect(manage.locator('.settings-row', { hasText: 'backup-' })).toHaveCount(2, { timeout: 10_000 })
+      await manage.locator('.settings-row', { hasText: 'backup-' }).first().locator('.danger-button').click()
+      const confirm = world.page.locator('.modal', { hasText: 'Delete backup?' })
+      await expect(confirm).toBeVisible()
+      await confirm.locator('.modal-foot .primary-button').click()
+      await expect(world.page.locator('.modal[aria-label="Backups"]')).toBeVisible()
+      await expect(
+        world.page.locator('.modal[aria-label="Backups"] .settings-row', { hasText: 'backup-' })
+      ).toHaveCount(1, { timeout: 10_000 })
+      const base = path.join(backupBase, 'FolderDock')
+      expect(await fsp.readdir(base)).toHaveLength(1)
+    } finally {
+      if (backupBase) await fsp.rm(backupBase, { recursive: true, force: true }).catch(() => undefined)
       await close(world)
     }
   })

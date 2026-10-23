@@ -21,6 +21,8 @@ export const CHANNELS = {
   chooseRoot: 'root:choose',
   backupLibrary: 'library:backup',
   chooseBackupFolder: 'backup:choose',
+  listBackups: 'backup:list',
+  deleteBackup: 'backup:delete',
   getPrefs: 'prefs:get',
   setPrefs: 'prefs:set',
   createNote: 'file:createNote'

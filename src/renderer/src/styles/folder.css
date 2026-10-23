@@ -501,17 +501,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 10.7px;
+  font-size: 11.5px;
   font-weight: 620;
 }
 .file-row .file-meta {
   color: #92a1ae;
-  font-size: 9.3px;
+  font-size: 10px;
   margin-top: 2px;
 }
 .file-row .file-snippet {
   color: #7fa0b5;
-  font-size: 9px;
+  font-size: 10px;
   font-style: italic;
   margin-top: 2px;
   white-space: nowrap;
@@ -584,10 +584,127 @@
   height: 13px;
 }
 
+.collection-page {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 4px 2px 16px;
+  animation: appear 0.14s ease-out;
+  min-height: 0;
+}
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #485664;
+  background: #1b242d;
+  color: #c7d3dd;
+  font-size: 11px;
+  font-weight: 620;
+  padding: 7px 11px;
+  border-radius: 8px;
+  flex: none;
+}
+.page-back:hover {
+  background: #35424d;
+  border-color: #70a0bf;
+  color: #fff;
+}
+.page-back .icon {
+  width: 13px;
+  height: 13px;
+}
+.flip-x {
+  transform: scaleX(-1);
+}
+.page-art {
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.page-title {
+  min-width: 0;
+}
+.page-name {
+  font-size: 15.5px;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.page-count {
+  color: #92a1ae;
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.page-tools {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.page-tools .secondary-button {
+  height: 34px;
+  padding: 0 11px;
+  font-size: 11.5px;
+}
+.page-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 46px;
+}
+.page-empty {
+  border: 1px dashed #536371;
+  border-radius: 10px;
+  padding: 36px 18px;
+  text-align: center;
+  color: #b0beca;
+  line-height: 1.7;
+  font-size: 12px;
+  background: #1b242d;
+}
+.collection-page .file-row {
+  height: 47px;
+  min-height: 47px;
+}
+.collection-page .file-row .file-name {
+  font-size: 12.5px;
+}
+.collection-page .file-row .file-meta {
+  font-size: 10.5px;
+}
+.collection-page .file-row .file-snippet {
+  font-size: 10.5px;
+}
+.collection-page .file-row .typeicon {
+  width: 27px;
+  height: 30px;
+}
+.collection-page .file-row .typeicon svg {
+  width: 15px;
+  height: 15px;
+}
+.collection-page .drop-hint {
+  margin-top: 0;
+}
+.collection-page.drag-over .drop-hint {
+  border-color: #6ea9cd;
+  color: #dfe9f2;
+  background: rgba(43, 61, 75, 0.4);
+}
+
 .context-menu {
   position: fixed;
   z-index: 390;
-  width: 190px;
+  width: 200px;
   padding: 5px;
   background: #252c34;
   border: 1px solid #4a5967;
@@ -602,7 +719,7 @@
   background: transparent;
   color: #d7e0e7;
   padding: 9px 8px;
-  font-size: 11px;
+  font-size: 12px;
   width: 100%;
   border: 0;
   border-radius: 6px;

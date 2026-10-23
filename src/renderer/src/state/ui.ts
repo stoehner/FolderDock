@@ -22,6 +22,7 @@ export type Modal =
   | { type: 'move-file'; relPath: string }
   | { type: 'move-files'; relPaths: string[] }
   | { type: 'recolor-folder'; folder: string }
+  | { type: 'backups' }
   | { type: 'help' }
   | { type: 'settings' }
   | { type: 'editor'; relPath: string }

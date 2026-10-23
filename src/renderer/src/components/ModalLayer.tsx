@@ -7,6 +7,7 @@ import { ConfirmModal } from './modals/ConfirmModal'
 import { MoveFileModal } from './modals/MoveFileModal'
 import { MoveFilesModal } from './modals/MoveFilesModal'
 import { RecolorFolderModal } from './modals/RecolorFolderModal'
+import { BackupsModal } from './modals/BackupsModal'
 import { HelpModal } from './modals/HelpModal'
 import { SettingsModal } from './modals/SettingsModal'
 
@@ -20,6 +21,7 @@ const ROUTES: {
   'move-file': m => <MoveFileModal relPath={m.relPath} />,
   'move-files': m => <MoveFilesModal relPaths={m.relPaths} />,
   'recolor-folder': m => <RecolorFolderModal folder={m.folder} />,
+  backups: () => <BackupsModal />,
   help: () => <HelpModal />,
   settings: () => <SettingsModal />
 }

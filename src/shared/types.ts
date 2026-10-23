@@ -91,6 +91,13 @@ export interface BackupResult {
   folders: number
 }
 
+export interface BackupEntry {
+  name: string
+  createdAtMs: number
+  sizeBytes: number
+  fileCount: number
+}
+
 export interface ContentMatch {
   relPath: string
   snippet: string
