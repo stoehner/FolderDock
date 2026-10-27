@@ -16,6 +16,8 @@ const { useUI } = await import('../state/ui')
 const { useLibrary } = await import('../state/library')
 
 type DragEventLike = Parameters<typeof dragOut.startOutDrag>[0]
+type ReadInput = Parameters<typeof dragOut.readInternalDrop>[0]
+const asDataTransfer = (dt: object): ReadInput['dataTransfer'] => dt as ReadInput['dataTransfer']
 
 function sourceEvent(): { preventDefault: () => void; dataTransfer: { setData: (t: string, v: string) => void; effectAllowed: string; dropEffect: string } } {
   return {
@@ -61,14 +63,17 @@ describe('drag out', () => {
   describe('internal marker', () => {
     it('reads the internal payload only for internal drags', () => {
       const external = { types: ['Files'], getData: vi.fn() }
-      expect(dragOut.readInternalDrop({ dataTransfer: external })).toBeNull()
+      expect(dragOut.readInternalDrop({ dataTransfer: asDataTransfer(external) })).toBeNull()
 
       const payload = dragOut.encodeInternalDrop(['A/one.md'])
       const internal = { types: [dragOut.INTERNAL_FILES_TYPE], getData: () => payload }
-      expect(dragOut.readInternalDrop({ dataTransfer: internal })).toEqual({ payload, files: ['A/one.md'] })
+      expect(dragOut.readInternalDrop({ dataTransfer: asDataTransfer(internal) })).toEqual({
+        payload,
+        files: ['A/one.md']
+      })
 
       const broken = { types: [dragOut.INTERNAL_FILES_TYPE], getData: () => 'not json' }
-      expect(dragOut.readInternalDrop({ dataTransfer: broken })).toBeNull()
+      expect(dragOut.readInternalDrop({ dataTransfer: asDataTransfer(broken) })).toBeNull()
     })
   })
 
