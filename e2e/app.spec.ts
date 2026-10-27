@@ -179,6 +179,7 @@ test.describe('FolderDock app', () => {
       await row.locator('.file-more').click()
       await world.page.locator('.context-menu button', { hasText: 'Delete file' }).click()
       await world.page.locator('.modal-foot .primary-button').click()
+      await expect(world.page.locator('.modal')).toHaveCount(0)
       await expect(view.locator('.file-row')).toHaveCount(0, { timeout: 15_000 })
       expect(fsSync.existsSync(path.join(world.root, 'A', 'gone.md'))).toBe(false)
     } finally {
@@ -1256,6 +1257,38 @@ test.describe('FolderDock app', () => {
       await pick('Medium')
       expect(Math.abs((await rowHeight()) - medium)).toBeLessThanOrEqual(1)
     } finally {
+      await close(world)
+    }
+  })
+
+  test('moves a file out of the library to a chosen destination', async () => {
+    const world = await launch({ 'A/bounce.md': 'move me out' })
+    let dest = ''
+    try {
+      dest = await fsp.mkdtemp(path.join(os.tmpdir(), 'fd-moveout-'))
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await expect(view.locator('.file-row', { hasText: 'bounce.md' })).toBeVisible()
+      const r = (await world.page.evaluate(
+        ([rel, target]) => {
+          const b = (
+            globalThis as unknown as {
+              folderdock: { moveFileOut: (rp: string, destination: string) => Promise<unknown> }
+            }
+          ).folderdock
+          return b.moveFileOut(String(rel), String(target))
+        },
+        ['A/bounce.md', dest]
+      )) as { ok: boolean; data: { result: { mode: string; sourceKept: boolean; name: string; destination: string } } }
+      expect(r.ok).toBe(true)
+      expect(r.data.result.mode).toBe('rename')
+      expect(r.data.result.sourceKept).toBe(false)
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'bounce.md'))).toBe(false)
+      expect(fsSync.readFileSync(path.join(dest, 'bounce.md'), 'utf8')).toBe('move me out')
+      await expect(view.locator('.file-row', { hasText: 'bounce.md' })).toHaveCount(0)
+    } finally {
+      if (dest) await fsp.rm(dest, { recursive: true, force: true }).catch(() => undefined)
       await close(world)
     }
   })

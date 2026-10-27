@@ -8,6 +8,7 @@ import {
   chooseImportOp,
   copyTextOp,
   createNoteOp,
+  moveOutOp,
   openExternalOp,
   promptDeleteFiles,
   promptDeleteFolder,
@@ -110,7 +111,8 @@ function buildItems(menu: ContextMenuState, snapshot: ReturnType<typeof useLibra
   const items: Item[] = [
     { label: 'Open with default app', icon: 'arrow', run: () => void openExternalOp(relPath) },
     { label: 'Rename', icon: 'rename', run: () => useUI.getState().openModal({ type: 'rename-file', relPath }) },
-    { label: 'Move to collection…', icon: 'move', run: () => useUI.getState().openModal({ type: 'move-file', relPath }) }
+    { label: 'Move to collection…', icon: 'move', run: () => useUI.getState().openModal({ type: 'move-file', relPath }) },
+    { label: 'Move out of library…', icon: 'upload', run: () => void moveOutOp(relPath) }
   ]
   if (isTextKind(kind) && !meta?.binary) {
     items.push({ label: 'Copy contents', icon: 'copy', run: () => void copyTextOp(relPath) })

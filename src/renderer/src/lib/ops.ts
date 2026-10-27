@@ -94,8 +94,27 @@ export async function deleteFilesOp(relPaths: string[]): Promise<void> {
       ui.notify(adoptError(e), 'error')
     }
   }
+  useUI.getState().closeModal()
   useUI.getState().clearSelection()
   ui.notify(`${relPaths.length} file${relPaths.length === 1 ? '' : 's'} moved to the Recycle Bin`)
+}
+
+export async function moveOutOp(relPath: string): Promise<void> {
+  const ui = useUI.getState()
+  try {
+    const dir = await call(api.chooseMoveOut())
+    if (!dir) return
+    const { result, snapshot } = await call(api.moveFileOut(relPath, dir))
+    useLibrary.getState().apply(snapshot)
+    const leaf = dir.split(/[\\/]/).filter(Boolean).pop() ?? dir
+    if (result.sourceKept) {
+      ui.notify(`"${result.name}" copied to ${leaf} — the library copy stays because it could not be recycled`, 'error')
+    } else {
+      ui.notify(`"${result.name}" moved out of FolderDock to ${leaf}`)
+    }
+  } catch (e) {
+    ui.notify(adoptError(e), 'error')
+  }
 }
 
 export type SaveOutcome = 'saved' | 'conflict' | 'invalid-name'

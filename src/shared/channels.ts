@@ -13,6 +13,8 @@ export const CHANNELS = {
   renameFile: 'file:rename',
   moveFile: 'file:move',
   deleteFile: 'file:delete',
+  moveFileOut: 'file:moveOut',
+  chooseMoveOut: 'file:chooseMoveOut',
   dropFiles: 'files:drop',
   chooseAndImport: 'files:choose',
   revealFile: 'file:reveal',

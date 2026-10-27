@@ -88,6 +88,18 @@ export interface ImportResult {
   skipped: { name: string; reason: string }[]
 }
 
+export interface MoveOutResult {
+  mode: 'rename' | 'copy'
+  sourceKept: boolean
+  name: string
+  destination: string
+}
+
+export interface MoveOutOutcome {
+  result: MoveOutResult
+  snapshot: LibrarySnapshot
+}
+
 export interface BackupResult {
   destination: string
   files: number

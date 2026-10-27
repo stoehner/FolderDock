@@ -4,6 +4,7 @@ import type {
   ContentMatch,
   DetailedFileMeta,
   ImportResult,
+  MoveOutOutcome,
   LibrarySnapshot,
   Prefs,
   TextFileContent,
@@ -28,6 +29,8 @@ export interface FolderDockBridge {
   renameFile(relPath: string, newName: string): Promise<IPCResult<LibrarySnapshot>>
   moveFile(relPath: string, targetFolder: string): Promise<IPCResult<LibrarySnapshot>>
   deleteFile(relPath: string): Promise<IPCResult<LibrarySnapshot>>
+  moveFileOut(relPath: string, destination: string): Promise<IPCResult<MoveOutOutcome>>
+  chooseMoveOut(): Promise<IPCResult<string | null>>
   dropFiles(paths: string[], targetFolder: string): Promise<IPCResult<ImportResult>>
   chooseAndImport(targetFolder: string): Promise<IPCResult<ImportResult>>
   revealFile(relPath: string): Promise<IPCResult<void>>

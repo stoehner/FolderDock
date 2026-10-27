@@ -13,6 +13,7 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - **Shelf**: the dashboard grid of collection cards.
 - **Collection page**: the full-window view of one collection's contents. Clicking a folder card opens it (creating a collection opens it too); the back button or Esc returns to the shelf. The search box and filter chips apply to the page's file list, and dropping files on the page moves them into that collection. `openFolder` names the collection whose page is open. The INSIDE FOLDER panel under a card only expands during search, as an inline results peek. The `fontSize` setting (Small/Medium/Large, default Medium) scales the page; the cards-shrink `--grid-zoom` never applies to it.
 - **Drop zone**: the dashed strip under the toolbar. Dropping files from Explorer there moves them into the library using the same target rule as shelf-background drops (open collection, else first collection, else Unsorted); clicking it opens the import picker.
+- **Move out of library**: the file context menu can move one file out of the library into a destination chosen in a dialog (`file:chooseMoveOut` picks the folder, `file:moveOut` performs the move). Same drive: rename. Different drive: copy, then the library copy goes to the Recycle Bin — if recycling fails the copy stays and a toast says so. Name collisions at the destination get a ` (n)` suffix, matching imports. A destination inside the library is refused (Move to collection covers that). The drag-out gesture stays a copy by design.
 - **Favorites**: files and collections the user starred via the star button on a file row or collection card. The Favorites filter shows starred collections in full plus starred files. `starred` holds file relPaths and collection names. The file context menu has no favorites item — the row's star button is the only toggle.
 - **Bridge**: the typed renderer-to-main interface (`FolderDockBridge` in `src/shared/api.ts`, exposed as `window.folderdock`). All cross-process calls go through it.
 - **Channel map**: `src/shared/channels.ts`. The single place that names every IPC channel; preload and the main handlers both read from it.
@@ -31,6 +32,7 @@ Shared language for agents and humans working on this codebase. Terms in the ren
 - Files are real on disk under the root, never in app/browser storage.
 - Deleting moves to the Windows Recycle Bin.
 - Importing files from outside the library (drops, the drop zone, the import picker) moves them: same-volume rename when possible, otherwise copy into the library and recycle the source.
+- Moving a file out of the library ("Move out of library…") is the import move in reverse. Drag-out remains a copy: Windows gives the app no word of where the drop landed.
 - The UI stays faithful to the glass-folder card design (`docs/reference/FolderDock_Interactive_v2.html`), with the 182px rescaled values in `src/renderer/src/styles/folder.css`.
 - Installers are unsigned; SmartScreen warnings are expected.
 - All IPC channel names come from the channel map; never write a channel string literal elsewhere.

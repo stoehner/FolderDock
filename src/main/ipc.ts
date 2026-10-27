@@ -72,6 +72,10 @@ export function registerIpc(ctx: MainContext): void {
   handle(CHANNELS.renameFile, async (_e, relPath: string, newName: string) => ops.renameFile(ctx.getRoot(), relPath, newName))
   handle(CHANNELS.moveFile, async (_e, relPath: string, targetFolder: string) => ops.moveFile(ctx.getRoot(), relPath, targetFolder))
   handle(CHANNELS.deleteFile, async (_e, relPath: string) => ops.deleteFile(ctx.getRoot(), relPath))
+  handle(CHANNELS.moveFileOut, async (_e, relPath: string, destination: unknown) => {
+    if (typeof destination !== 'string') throw new Error('Choose a destination folder first.')
+    return ops.moveFileOut(ctx.getRoot(), relPath, destination)
+  })
   handle(CHANNELS.dropFiles, async (_e, paths: string[], targetFolder: string) => ops.importPaths(ctx.getRoot(), paths, targetFolder))
 
   handle(CHANNELS.chooseAndImport, async (_e, targetFolder: string) => {
@@ -149,6 +153,17 @@ export function registerIpc(ctx: MainContext): void {
       await ctx.onRootChanged(root ?? ctx.getRoot())
     }
     return next
+  })
+
+  handle(CHANNELS.chooseMoveOut, async () => {
+    const win = ctx.getWindow()
+    if (!win) throw new Error('No window is available.')
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Choose where to move this file out of FolderDock',
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (res.canceled || res.filePaths.length === 0) return null
+    return res.filePaths[0]
   })
 
   handle(CHANNELS.createNote, async (_e, folderName: string, baseName?: string) =>

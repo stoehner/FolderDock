@@ -7,6 +7,7 @@ import type {
   ContentMatch,
   DetailedFileMeta,
   ImportResult,
+  MoveOutOutcome,
   LibrarySnapshot,
   Prefs,
   TextFileContent,
@@ -37,6 +38,9 @@ const api: FolderDockBridge = {
   renameFile: (relPath: string, newName: string) => invoke<LibrarySnapshot>(CHANNELS.renameFile, relPath, newName),
   moveFile: (relPath: string, targetFolder: string) => invoke<LibrarySnapshot>(CHANNELS.moveFile, relPath, targetFolder),
   deleteFile: (relPath: string) => invoke<LibrarySnapshot>(CHANNELS.deleteFile, relPath),
+  moveFileOut: (relPath: string, destination: string) =>
+    invoke<MoveOutOutcome>(CHANNELS.moveFileOut, relPath, destination),
+  chooseMoveOut: () => invoke<string | null>(CHANNELS.chooseMoveOut),
   dropFiles: (paths: string[], targetFolder: string) => invoke<ImportResult>(CHANNELS.dropFiles, paths, targetFolder),
   chooseAndImport: (targetFolder: string) => invoke<ImportResult>(CHANNELS.chooseAndImport, targetFolder),
   revealFile: (relPath: string) => invoke<void>(CHANNELS.revealFile, relPath),

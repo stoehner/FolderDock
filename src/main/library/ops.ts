@@ -12,6 +12,8 @@ import {
   type ContentMatch,
   type DetailedFileMeta,
   type ImportResult,
+  type MoveOutOutcome,
+  type MoveOutResult,
   type LibrarySnapshot,
   type TextFileContent,
   type WriteTextRequest,
@@ -318,6 +320,45 @@ export async function deleteFile(root: string, relPath: string): Promise<Library
   if (!fsSync.existsSync(abs)) throw new Error('That file no longer exists on disk.')
   await trashPath(abs)
   return scanLibrary(root)
+}
+
+export async function moveFileOut(root: string, relPath: string, destinationDir: string): Promise<MoveOutOutcome> {
+  const abs = requireWithin(root, relPath)
+  if (!fsSync.existsSync(abs)) throw new Error('That file no longer exists on disk.')
+  if (!path.isAbsolute(destinationDir)) throw new Error('Choose an absolute destination folder.')
+  const destination = path.resolve(destinationDir)
+  if (!fsSync.existsSync(destination)) throw new Error('The destination folder does not exist.')
+  if (!(await fsp.stat(destination)).isDirectory()) throw new Error('The destination is not a folder.')
+  if (path.resolve(destination) === path.resolve(root) || resolveWithinRoot(root, destination)) {
+    throw new Error('The destination is inside the library — use "Move to collection…" instead.')
+  }
+  const target = uniqueName(await listNames(destination), path.basename(abs))
+  const destFile = path.join(destination, target)
+  const sameVolume = path.parse(abs).root.toLowerCase() === path.parse(destination).root.toLowerCase()
+  let result: MoveOutResult
+  try {
+    if (sameVolume) {
+      await fsp.rename(abs, destFile)
+      result = { mode: 'rename', sourceKept: false, name: target, destination }
+    } else {
+      await fsp.copyFile(abs, destFile)
+      let sourceKept = false
+      try {
+        await trashPath(abs)
+      } catch {
+        sourceKept = true
+      }
+      result = { mode: 'copy', sourceKept, name: target, destination }
+    }
+  } catch (err) {
+    try {
+      await fsp.unlink(destFile)
+    } catch {
+      /* nothing to clean */
+    }
+    fail(err)
+  }
+  return { result, snapshot: await scanLibrary(root) }
 }
 
 export async function importPaths(root: string, absPaths: string[], targetFolder: string): Promise<ImportResult> {
