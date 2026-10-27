@@ -39,7 +39,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 
 - Glass folder cards with eighteen color styles in three sections plus a visual custom color picker with a saved, deletable palette, reorderable by drag handle, renamable and recolorable from the right-click menu
 - Open a folder in place with an internal, scrollable file list
-- Files created, renamed, moved, or deleted through real filesystem operations, with destructive actions going to the Windows Recycle Bin
+- Files created, renamed, moved, or deleted through real filesystem operations, with destructive actions going to the Windows Recycle Bin. Imports are deduped: a file that is byte-identical to one already in the target collection is skipped with a toast instead of creating a ` (2)` copy
 - Move a file out of the library from its right-click menu into any folder you choose (same-drive rename; cross-drive copy plus Recycle Bin for the library copy)
 - Loose files at the library root surface in a built-in Unsorted collection so nothing is ever hidden
 
@@ -126,7 +126,7 @@ Environment overrides for development and testing:
 ## Testing
 
 - **Unit tests** (Vitest, 60 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, and color conversions for the picker
-- **End-to-end tests** (Playwright Electron, 44 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, moving a file out of the library to a chosen destination, manual backups, and right-click menus
+- **End-to-end tests** (Playwright Electron, 46 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, manual backups, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

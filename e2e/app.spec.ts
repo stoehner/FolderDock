@@ -1292,4 +1292,53 @@ test.describe('FolderDock app', () => {
       await close(world)
     }
   })
+
+  test('skips importing a byte-identical copy of a file already in the collection', async () => {
+    const world = await launch({ 'A/keep.md': 'identical bytes' })
+    try {
+      const src = path.join(world.userData, 'from-desktop.md')
+      await fsp.writeFile(src, 'identical bytes', 'utf8')
+      const r = (await world.page.evaluate(
+        p => {
+          const b = (globalThis as unknown as { folderdock: { dropFiles: (ps: string[], t: string) => Promise<unknown> } })
+            .folderdock
+          return b.dropFiles([p], 'A')
+        },
+        src
+      )) as { ok: boolean; data: { moved: unknown[]; imported: unknown[]; skipped: { name: string; reason: string }[] } }
+      expect(r.ok).toBe(true)
+      expect(r.data.moved).toHaveLength(0)
+      expect(r.data.imported).toHaveLength(0)
+      expect(r.data.skipped).toHaveLength(1)
+      expect(r.data.skipped[0]?.reason).toContain('identical content')
+      expect(fsSync.existsSync(src)).toBe(true)
+      expect(fsSync.readdirSync(path.join(world.root, 'A'))).toEqual(['keep.md'])
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('dedupe is scoped to the target collection: identical content in another collection still imports', async () => {
+    const world = await launch({ 'A/keep.md': 'twin content', 'B/filler.md': 'x' })
+    try {
+      const src = path.join(world.userData, 'twin.md')
+      await fsp.writeFile(src, 'twin content', 'utf8')
+      const r = (await world.page.evaluate(
+        p => {
+          const b = (globalThis as unknown as { folderdock: { dropFiles: (ps: string[], t: string) => Promise<unknown> } })
+            .folderdock
+          return b.dropFiles([p], 'B')
+        },
+        src
+      )) as { ok: boolean; data: { moved: unknown[]; skipped: unknown[] } }
+      expect(r.ok).toBe(true)
+      expect(r.data.moved).toHaveLength(1)
+      expect(r.data.skipped).toHaveLength(0)
+      expect(fsSync.existsSync(src)).toBe(false)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'twin.md'))).toBe(true)
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'keep.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
 })

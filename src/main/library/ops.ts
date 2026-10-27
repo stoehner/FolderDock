@@ -32,6 +32,7 @@ import {
 
 const MAX_TEXT_BYTES = 2 * 1024 * 1024
 const MAX_IMPORT_BYTES = 200 * 1024 * 1024
+const CONTENT_CHUNK = 64 * 1024
 const MAX_CONTENT_SEARCH_BYTES = 512 * 1024
 const MAX_CONTENT_MATCHES = 100
 const BACKUP_NAME_RE = /^backup-\d{4}-\d{2}-\d{2}-\d{6}(-\d+)?$/
@@ -64,6 +65,63 @@ async function trashPath(abs: string): Promise<void> {
   } catch (err) {
     fail(err)
   }
+}
+
+async function filesIn(dir: string): Promise<string[]> {
+  let entries: string[] = []
+  try {
+    entries = await fsp.readdir(dir)
+  } catch {
+    return []
+  }
+  const files: string[] = []
+  for (const name of entries) {
+    try {
+      const st = await fsp.stat(path.join(dir, name))
+      if (st.isFile()) files.push(name)
+    } catch {
+      /* removed while listing; ignore */
+    }
+  }
+  return files
+}
+
+async function sameContent(a: string, b: string, size: number): Promise<boolean> {
+  const sa = await fsp.open(a, 'r')
+  try {
+    const sb = await fsp.open(b, 'r')
+    try {
+      const bufA = Buffer.allocUnsafe(CONTENT_CHUNK)
+      const bufB = Buffer.allocUnsafe(CONTENT_CHUNK)
+      let pos = 0
+      while (pos < size) {
+        const want = Math.min(CONTENT_CHUNK, size - pos)
+        const [ra, rb] = await Promise.all([sa.read(bufA, 0, want, pos), sb.read(bufB, 0, want, pos)])
+        if (ra.bytesRead !== want || rb.bytesRead !== want) return false
+        if (!bufA.subarray(0, want).equals(bufB.subarray(0, want))) return false
+        pos += want
+      }
+      return true
+    } finally {
+      await sb.close()
+    }
+  } finally {
+    await sa.close()
+  }
+}
+
+async function findExistingDuplicate(targetDir: string, incomingAbs: string, size: number): Promise<string | null> {
+  for (const name of await filesIn(targetDir)) {
+    const candidate = path.join(targetDir, name)
+    try {
+      const st = await fsp.stat(candidate)
+      if (!st.isFile() || st.size !== size) continue
+      if (await sameContent(incomingAbs, candidate, size)) return name
+    } catch {
+      /* candidate vanished while scanning; ignore */
+    }
+  }
+  return null
 }
 
 export async function createFolder(root: string, rawName: string): Promise<LibrarySnapshot> {
@@ -393,6 +451,14 @@ export async function importPaths(root: string, absPaths: string[], targetFolder
         } catch (err) {
           result.skipped.push({ name: display, reason: describeFsError(err) })
         }
+        continue
+      }
+      const dup = await findExistingDuplicate(targetDir, resolved, st.size)
+      if (dup) {
+        result.skipped.push({
+          name: display,
+          reason: `"${dup}" is already in this collection — identical content.`
+        })
         continue
       }
       const target = uniqueName(await listNames(targetDir), path.basename(resolved))

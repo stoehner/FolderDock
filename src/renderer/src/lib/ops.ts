@@ -208,7 +208,9 @@ function importSummary(r: ImportResult, target: string): void {
   if (ok > 0) {
     ui.notify(`${parts.join(' · ')} into ${target}${r.skipped.length ? ` · ${r.skipped.length} skipped` : ''}`)
   } else if (r.skipped.length > 0) {
-    ui.notify(r.skipped[0]?.reason ?? 'Nothing imported.', 'error')
+    const more = r.skipped.length - 1
+    const first = r.skipped[0]?.reason ?? 'Nothing imported.'
+    ui.notify(more > 0 ? `${first} (${more} more skipped)` : first, 'error')
   } else {
     ui.notify('Nothing to do — files are already in place.')
   }
