@@ -51,6 +51,47 @@ async function close(world: World): Promise<void> {
   await fsp.rm(world.userData, { recursive: true, force: true }).catch(() => undefined)
 }
 
+/**
+ * Fires a synthetic HTML5 drag sequence synchronously: one shared DataTransfer across
+ * dragstart → dragover → drop → dragend, all dispatched in a single script so dragend
+ * lands before any re-render can unmount the drag source (as with a real mouse drag).
+ */
+async function runInternalScriptDrag(
+  page: Page,
+  srcSel: string,
+  dstSel: string | null,
+  opts: { dragover?: boolean; drop?: boolean; dragend?: boolean; forceEffect?: string } = {}
+): Promise<void> {
+  await page.evaluate(
+    ({ opts, srcSel, dstSel }) => {
+      const doc = (
+        globalThis as unknown as {
+          document: { querySelector: (s: string) => { dispatchEvent: (ev: unknown) => void } | null }
+        }
+      ).document
+      const g = globalThis as unknown as {
+        DataTransfer: new () => { dropEffect: string }
+        DragEvent: new (
+          type: string,
+          init?: { dataTransfer?: unknown; bubbles?: boolean; cancelable?: boolean }
+        ) => unknown
+      }
+      const dt = new g.DataTransfer()
+      const fire = (el: { dispatchEvent: (ev: unknown) => void }, type: string): void =>
+        el.dispatchEvent(new g.DragEvent(type, { dataTransfer: dt, bubbles: true, cancelable: true }))
+      const src = doc.querySelector(srcSel)
+      if (!src) throw new Error(`missing drag source: ${srcSel}`)
+      fire(src, 'dragstart')
+      if (opts.forceEffect) dt.dropEffect = opts.forceEffect
+      const dst = dstSel ? doc.querySelector(dstSel) : null
+      if (dst && opts.dragover) fire(dst, 'dragover')
+      if (dst && opts.drop) fire(dst, 'drop')
+      if (opts.dragend) fire(src, 'dragend')
+    },
+    { opts, srcSel, dstSel }
+  )
+}
+
 test.describe('FolderDock app', () => {
   test('boots, seeds welcome library, and shows collections', async () => {
     const world = await launch()
@@ -1337,6 +1378,64 @@ test.describe('FolderDock app', () => {
       expect(fsSync.existsSync(src)).toBe(false)
       expect(fsSync.existsSync(path.join(world.root, 'B', 'twin.md'))).toBe(true)
       expect(fsSync.existsSync(path.join(world.root, 'A', 'keep.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('an internal file drag dropped onto another collection moves the file there', async () => {
+    const world = await launch({ 'A/one.md': 'x', 'B/keep.md': 'y' })
+    try {
+      const src = world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')
+      await expect(src).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', '[data-folder="B"]', {
+        dragover: true,
+        drop: true,
+        dragend: true
+      })
+      await expect.poll(() => fsSync.existsSync(path.join(world.root, 'A', 'one.md')), { timeout: 10_000 }).toBe(false)
+      expect(fsSync.readFileSync(path.join(world.root, 'B', 'one.md'), 'utf8')).toBe('x')
+      await expect(world.page.locator('.toast')).toContainText('1 file moved into B')
+      // the drop was consumed internally: a later dragend must not move or delete anything.
+      // (synthetic dragend always reports effect 'none' — accepted-effect handling is unit-tested)
+      await world.page.waitForTimeout(2000)
+      expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('an internal file drag dropped back onto its own collection changes nothing', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await world.page.locator('[data-folder="A"] .folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await expect(view.locator('.file-row[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '.collection-page .file-row[data-file="A/one.md"]', '.dropzone', {
+        dragover: true,
+        drop: true,
+        dragend: true
+      })
+      await expect(world.page.locator('.toast')).toContainText('Already in this collection.')
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
+      await expect(view.locator('.file-row[data-file="A/one.md"]')).toBeVisible()
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a cancelled drag out of the window keeps the library file', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      // no drop — the dragend falls through the rejected-effect guard, the settle timer never fires
+      // (synthetic dragend always reports effect 'none'; accepted effects are unit-tested in dragOut.test.ts)
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, { dragend: true })
+      await world.page.waitForTimeout(2000)
+      await expect(world.page.locator('.toast')).toHaveCount(0)
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
     } finally {
       await close(world)
     }

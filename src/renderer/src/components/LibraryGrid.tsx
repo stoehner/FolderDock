@@ -12,7 +12,8 @@ import type { FileSort } from '../../../shared/types'
 import { FileRow } from './FileRow'
 import { PaperSheet } from './PaperSheet'
 import { CollectionPage } from './CollectionPage'
-import { chooseImportOp, createNoteOp, importDropOp } from '../lib/ops'
+import { chooseImportOp, createNoteOp, importDropOp, internalDropOp } from '../lib/ops'
+import { isInternalDrag, markInternalDropHandled, readInternalDrop } from '../lib/dragOut'
 
 export interface DisplayFolder extends FolderSnapshot {
   art: ReturnType<typeof artFor>
@@ -255,7 +256,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
       setDropTarget(folder.name)
-    } else if (types.includes('Files')) {
+    } else if (isInternalDrag(e) || types.includes('Files')) {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
       setDropTarget(folder.name)
@@ -277,6 +278,12 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
     if (types.includes('application/x-folderdock-folder')) {
       const source = e.dataTransfer.getData('application/x-folderdock-folder')
       if (source && source !== folder.name) useUI.getState().moveFolderOrder(source, folder.name)
+      return
+    }
+    const internal = readInternalDrop(e)
+    if (internal) {
+      markInternalDropHandled(internal.payload)
+      void internalDropOp(internal.files, folder.name)
       return
     }
     if (e.dataTransfer.files.length > 0) {

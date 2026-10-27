@@ -1,6 +1,8 @@
 import type { FileMeta } from '../../../shared/types'
-import { api, formatSize } from '../lib/api'
+import { formatSize } from '../lib/api'
+import { finishOutDrag, startOutDrag } from '../lib/dragOut'
 import { ico } from '../lib/icons'
+import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
 import { promptDeleteFiles } from '../lib/ops'
 
@@ -24,6 +26,7 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
   const snippet = useUI(s => s.contentMatches[file.relPath])
   const inSelection = useUI(s => s.selection.includes(file.relPath))
   const selection = useUI(s => s.selection)
+  const root = useLibrary(s => s.snapshot?.root ?? '')
 
   return (
     <div
@@ -59,10 +62,10 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
         openMenu({ kind: 'file', relPath: file.relPath, x: e.clientX, y: e.clientY })
       }}
       onDragStart={e => {
-        e.preventDefault()
         const others = inSelection && selection.length > 1 ? selection.filter(p => p !== file.relPath) : undefined
-        api.startDrag(file.relPath, others)
+        startOutDrag(e, file.relPath, root, others)
       }}
+      onDragEnd={e => finishOutDrag(e, file.relPath, file.size)}
     >
       <span className={`typeicon ${kindClass(file)}`}>{ico(iconFor(file))}</span>
       <div className="file-info">

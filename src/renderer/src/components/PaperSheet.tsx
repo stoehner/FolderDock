@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import type { FileMeta } from '../../../shared/types'
 import { extOf, kindForExt } from '../../../shared/kinds'
-import { api, fdfileUrl } from '../lib/api'
+import { fdfileUrl } from '../lib/api'
+import { finishOutDrag, startOutDrag } from '../lib/dragOut'
 import { useExcerpts } from '../state/excerpts'
 import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
@@ -54,10 +55,8 @@ export function PaperSheet({
           openPreview(file.relPath)
         }
       }}
-      onDragStart={e => {
-        e.preventDefault()
-        api.startDrag(file.relPath)
-      }}
+      onDragStart={e => startOutDrag(e, file.relPath, root)}
+      onDragEnd={e => finishOutDrag(e, file.relPath, file.size)}
     >
       <div className="sheet-top">
         <span className="mini-badge">{typeTag(file)}</span>

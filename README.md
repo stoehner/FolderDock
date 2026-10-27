@@ -29,7 +29,7 @@ FolderDock is designed to sit beside your editor, browser, or notes app as a com
 
 ## About
 
-FolderDock presents your files as animated glass folder cards, two per row, in a narrow resizable window. Click a frosted folder front and it opens in place to reveal its contents. Each folder shows up to three paper sheets representing its newest files, and every sheet is a real file record: its name, type tag, and summary come from the file on disk, and grabbing it starts a native Windows drag with the actual file attached.
+FolderDock presents your files as animated glass folder cards, two per row, in a narrow resizable window. Click a frosted folder front and it opens in place to reveal its contents. Each folder shows up to three paper sheets representing its newest files, and every sheet is a real file record: its name, type tag, and summary come from the file on disk, and grabbing it starts a drag with the actual file attached.
 
 The project started as an interactive HTML concept (preserved in [docs/reference](docs/reference)) and was rebuilt as a production desktop application with genuine operating system integration. The renderer cannot touch the filesystem directly. All file operations go through a typed, allowlisted IPC bridge to the Electron main process, which validates that every path stays inside the library root.
 
@@ -45,9 +45,10 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 
 **Native drag and drop**
 
-- Drag a paper sheet or file row straight into Explorer, an editor, an email, or any app that accepts files. The original always stays in your library
+- Drag a paper sheet or file row straight into Explorer, an editor, an email, or any app that accepts files. Dragging out a single file moves it out of your library — the copy lands where you dropped it and the original goes to the Recycle Bin once the drop settles — so a file cannot be accidentally multiplied by dragging a copy out and importing it back
+- Drop a library file onto another collection, onto the library background with a folder open, or into the toolbar drop zone to move it between collections without touching the Recycle Bin; release anywhere else to cancel and keep the file
 - Drop files from Explorer onto a collection or the toolbar drop zone to move them into your library, with automatic collision suffixes for duplicate names; the source copy is removed so there is nothing to clean up afterwards
-- Drop a library file onto another collection to move it, or drop it anywhere else to leave it untouched
+- Multi-file drags (Ctrl-selected rows moved together) and Alt-drag shortcut drops stay a plain copy with the original kept
 
 **Preview and editing**
 
@@ -125,8 +126,8 @@ Environment overrides for development and testing:
 
 ## Testing
 
-- **Unit tests** (Vitest, 60 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, and color conversions for the picker
-- **End-to-end tests** (Playwright Electron, 46 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, manual backups, and right-click menus
+- **Unit tests** (Vitest, 70 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, color conversions for the picker, and the drag-out carrier: marker encoding/decoding, DownloadURL construction, settle-window arithmetic, and accepted, cancelled, consumed, and native-drag dragend effects
+- **End-to-end tests** (Playwright Electron, 49 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, internal file drags between libraries and collections, cancelled drag-out, manual backups, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

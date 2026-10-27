@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ico } from '../lib/icons'
 import { useLibrary } from '../state/library'
 import { targetFolderForNewItems, useUI, type FilterKind } from '../state/ui'
-import { chooseImportOp, createNoteOp, importDropOp } from '../lib/ops'
+import { chooseImportOp, createNoteOp, importDropOp, internalDropOp } from '../lib/ops'
+import { isInternalDrag, markInternalDropHandled, readInternalDrop } from '../lib/dragOut'
 
 const FILTERS: { id: FilterKind; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -55,7 +56,7 @@ export function Toolbar() {
         title="Drop files here to move them into your library, or click to browse"
         onClick={() => void chooseImportOp()}
         onDragOver={e => {
-          if (Array.from(e.dataTransfer.types).includes('Files')) {
+          if (isInternalDrag(e) || Array.from(e.dataTransfer.types).includes('Files')) {
             e.preventDefault()
             e.dataTransfer.dropEffect = 'move'
             setZoneOver(true)
@@ -67,6 +68,13 @@ export function Toolbar() {
         onDrop={e => {
           e.preventDefault()
           setZoneOver(false)
+          const internal = readInternalDrop(e)
+          if (internal) {
+            e.stopPropagation()
+            markInternalDropHandled(internal.payload)
+            void internalDropOp(internal.files, targetFolderForNewItems() ?? 'Unsorted')
+            return
+          }
           if (e.dataTransfer.files.length === 0) return
           const paths = Array.from(e.dataTransfer.files)
             .map(f => {

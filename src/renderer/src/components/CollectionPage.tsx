@@ -6,7 +6,8 @@ import { useUI } from '../state/ui'
 import { usePrefs } from '../state/prefs'
 import { FileRow } from './FileRow'
 import { filterFolderFiles } from './LibraryGrid'
-import { chooseImportOp, createNoteOp, importDropOp } from '../lib/ops'
+import { chooseImportOp, createNoteOp, importDropOp, internalDropOp } from '../lib/ops'
+import { isInternalDrag, markInternalDropHandled, readInternalDrop } from '../lib/dragOut'
 
 interface PageProps {
   folder: FolderSnapshot
@@ -40,6 +41,12 @@ export function CollectionPage({ folder }: PageProps) {
     e.stopPropagation()
     setDragOver(false)
     useUI.getState().dragReset()
+    const internal = readInternalDrop(e)
+    if (internal) {
+      markInternalDropHandled(internal.payload)
+      void internalDropOp(internal.files, folder.name)
+      return
+    }
     if (e.dataTransfer.files.length === 0) return
     const paths = Array.from(e.dataTransfer.files)
       .map(f => {
@@ -58,7 +65,7 @@ export function CollectionPage({ folder }: PageProps) {
       className={`collection-page${dragOver ? ' drag-over' : ''}`}
       data-folder={folder.name}
       onDragOver={e => {
-        if (Array.from(e.dataTransfer.types).includes('Files')) {
+        if (isInternalDrag(e) || Array.from(e.dataTransfer.types).includes('Files')) {
           e.preventDefault()
           e.dataTransfer.dropEffect = 'move'
           setDragOver(true)

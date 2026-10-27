@@ -1,4 +1,4 @@
-import { api, call, errText, pathInsideRoot } from './api'
+import { api, call, errText, folderOfRel, pathInsideRoot } from './api'
 import { useLibrary } from '../state/library'
 import { usePrefs } from '../state/prefs'
 import { targetFolderForNewItems, useUI } from '../state/ui'
@@ -81,6 +81,15 @@ export async function moveFilesOp(relPaths: string[], targetFolder: string): Pro
   ui.closeModal()
   useUI.getState().clearSelection()
   if (moved > 0) ui.notify(`${moved} file${moved === 1 ? '' : 's'} moved into ${targetFolder}`)
+}
+
+export async function internalDropOp(relPaths: string[], targetFolder: string): Promise<void> {
+  const usable = relPaths.filter(p => folderOfRel(p) !== targetFolder)
+  if (usable.length === 0) {
+    useUI.getState().notify('Already in this collection.')
+    return
+  }
+  await moveFilesOp(usable, targetFolder)
 }
 
 export async function deleteFilesOp(relPaths: string[]): Promise<void> {
