@@ -14,6 +14,8 @@ export interface UpdateEngineOptions {
   disabled: boolean
 }
 
+// Notes are one short line each on purpose. The Settings card renders the status
+// line only while something is happening, so idle and disabled states stay blank.
 export function createInitialUpdateState(opts: UpdateEngineOptions): UpdateStateView {
   return {
     status: opts.disabled ? 'disabled' : 'idle',
@@ -21,18 +23,14 @@ export function createInitialUpdateState(opts: UpdateEngineOptions): UpdateState
     progress: null,
     canInstall: false,
     portable: opts.portable,
-    note: opts.disabled
-      ? 'Development build — grab installers from the GitHub Releases page.'
-      : opts.portable
-        ? 'Portable copy — updates are announced, but download a new portable build yourself.'
-        : 'Checked at launch. The update downloads on its own and installs when FolderDock quits.'
+    note: ''
   }
 }
 
 export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, currentVersion: string): UpdateStateView {
   switch (ev.type) {
     case 'checking':
-      return { ...prev, status: 'checking', progress: null, canInstall: false, note: 'Checking for updates…' }
+      return { ...prev, status: 'checking', progress: null, canInstall: false, note: 'Checking…' }
     case 'available':
       if (prev.portable) {
         return {
@@ -41,7 +39,7 @@ export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, curre
           version: ev.version,
           progress: null,
           canInstall: false,
-          note: `Version ${ev.version} is available — open Releases to download the new portable build.`
+          note: `New version ${ev.version} is available.`
         }
       }
       return {
@@ -50,7 +48,7 @@ export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, curre
         version: ev.version,
         progress: 0,
         canInstall: false,
-        note: `Downloading update to ${ev.version}…`
+        note: `Downloading ${ev.version}…`
       }
     case 'notAvailable':
       return {
@@ -59,11 +57,11 @@ export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, curre
         version: currentVersion,
         progress: null,
         canInstall: false,
-        note: `FolderDock ${currentVersion} is up to date.`
+        note: 'Up to date.'
       }
     case 'progress': {
       const percent = Math.max(0, Math.min(100, Math.round(ev.percent)))
-      return { ...prev, status: 'downloading', progress: percent, canInstall: false, note: `Downloading update… ${percent}%` }
+      return { ...prev, status: 'downloading', progress: percent, canInstall: false, note: `Downloading… ${percent}%` }
     }
     case 'downloaded':
       return {
@@ -71,7 +69,7 @@ export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, curre
         status: 'downloaded',
         progress: 100,
         canInstall: !prev.portable,
-        note: 'Update ready — installs automatically when FolderDock quits.'
+        note: 'Update ready — installs next quit.'
       }
     case 'error':
       return {
@@ -79,7 +77,7 @@ export function reduceUpdateEvent(prev: UpdateStateView, ev: UpdaterEvent, curre
         status: 'error',
         progress: null,
         canInstall: false,
-        note: `Update check failed: ${ev.message}`
+        note: `Update failed: ${ev.message}`
       }
   }
 }

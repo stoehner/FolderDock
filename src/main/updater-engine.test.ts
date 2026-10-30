@@ -69,7 +69,7 @@ describe('reduceUpdateEvent', () => {
     const s = reduceUpdateEvent(baseView(), { type: 'notAvailable' }, '1.3.4')
     expect(s.status).toBe('uptodate')
     expect(s.version).toBe('1.3.4')
-    expect(s.note).toContain('up to date')
+    expect(s.note).toBe('Up to date.')
   })
 
   it('surfaces errors with the reason in the note', () => {

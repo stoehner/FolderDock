@@ -103,6 +103,10 @@ export function SettingsModal() {
     })
   }
 
+  // The card stays silent until something actually happens; then one short line.
+  const updateSub =
+    updates && updates.status !== 'idle' && updates.status !== 'disabled' ? updates.note : ''
+
   return (
     <section className="modal" role="dialog" aria-modal="true" aria-label="Settings">
       <Head icon="gear" title="Settings" sub="Library location and appearance." onClose={() => useUI.getState().closeModal()} />
@@ -144,7 +148,7 @@ export function SettingsModal() {
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">Updates</div>
-            <div className="settings-sub">{updates?.note ?? ''}</div>
+            {updateSub ? <div className="settings-sub">{updateSub}</div> : null}
           </div>
           <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
             {updates?.canInstall ? (
@@ -158,16 +162,9 @@ export function SettingsModal() {
               </button>
             ) : null}
             <button className="secondary-button" onClick={() => void checkForUpdates()}>
-              Check now
+              Check for updates
             </button>
           </div>
-        </div>
-        <div className="settings-row">
-          <div style={{ minWidth: 0 }}>
-            <div className="settings-label">Automatic update checks</div>
-            <div className="settings-sub">Look for a new version each time FolderDock starts. The update downloads itself and installs on quit.</div>
-          </div>
-          <Toggle on={prefs.autoCheckUpdates} onChange={v => patch({ autoCheckUpdates: v })} label="Automatic update checks" />
         </div>
         <div className="settings-row">
           <div className="settings-label">Appearance</div>

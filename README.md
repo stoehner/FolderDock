@@ -73,7 +73,7 @@ Windows may show a SmartScreen warning because the binaries are not code signed.
 
 On first launch the app creates a `Documents\FolderDock` library with a welcome note. Delete that folder or pick your own root in Settings at any time.
 
-**Updates.** The installed app checks the GitHub Releases feed when it starts and downloads a new version in the background; the update applies automatically the next time you quit FolderDock (Settings → Updates can check manually or switch the automatic check off, and shows a "Restart & update" button once one is ready). Portable builds never upgrade themselves — they announce the new version and open the Releases page. Windows asks for admin permission when an update installs, exactly as it does on a first install.
+**Updates.** The installed app checks the GitHub Releases feed when it starts and downloads a new version in the background; the update applies automatically the next time you quit FolderDock. Settings → Updates stays out of the way: just a Check for updates button, a short progress line while one downloads, and a Restart & update button once it is ready. Portable builds never upgrade themselves — they announce the new version and open the Releases page. Windows asks for admin permission when an update installs, exactly as it does on a first install.
 
 ## Where your files live
 

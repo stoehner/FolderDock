@@ -12,7 +12,6 @@ const SETTINGS_KEYS = [
   'fileSort',
   'closeToTray',
   'confirmDelete',
-  'autoCheckUpdates',
   'hoverDelay',
   'newFolderArt',
   'backupLocation',

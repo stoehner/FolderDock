@@ -73,7 +73,8 @@ jobs:
           foreach ($extra in @($drafts | Where-Object { $_.id -ne $keeper.id })) {
             foreach ($asset in @($extra.assets)) {
               $tmp = Join-Path $env:RUNNER_TEMP $asset.name
-              Invoke-RestMethod -Uri $asset.url -Headers (@{ Accept = 'application/octet-stream' } + $hdr) -OutFile $tmp
+              Invoke-RestMethod -Uri $asset.url -Headers @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/octet-stream' } -OutFile $tmp
+              if ((Get-Item $tmp).Length -ne $asset.size) { throw "Downloaded $($asset.name) is $((Get-Item $tmp).Length) bytes, expected $($asset.size)." }
               $upload = "https://uploads.github.com/repos/stoehner/FolderDock/releases/$($keeper.id)/assets?name=$([uri]::EscapeDataString($asset.name))"
               Invoke-RestMethod -Method Post -Uri $upload -Headers $hdr -ContentType 'application/octet-stream' -InFile $tmp
               Remove-Item $tmp -ErrorAction SilentlyContinue
