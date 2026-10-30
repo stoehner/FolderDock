@@ -57,6 +57,7 @@ export interface Prefs {
   fileSort: FileSort
   closeToTray: boolean
   confirmDelete: boolean
+  autoCheckUpdates: boolean
   hoverDelay: HoverDelay
   newFolderArt: string
   backupLocation: string
@@ -124,5 +125,24 @@ export interface DetailedFileMeta extends FileMeta {
 }
 
 export type IPCResult<T> = { ok: true; data: T } | { ok: false; error: string }
+
+export type UpdateStatus =
+  | 'disabled'
+  | 'idle'
+  | 'checking'
+  | 'downloading'
+  | 'downloaded'
+  | 'uptodate'
+  | 'available'
+  | 'error'
+
+export interface UpdateStateView {
+  status: UpdateStatus
+  version: string | null
+  note: string
+  progress: number | null
+  canInstall: boolean
+  portable: boolean
+}
 
 export const UNSORTED = 'Unsorted'

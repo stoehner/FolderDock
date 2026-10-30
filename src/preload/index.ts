@@ -11,6 +11,7 @@ import type {
   LibrarySnapshot,
   Prefs,
   TextFileContent,
+  UpdateStateView,
   WriteTextRequest,
   WriteTextResult,
   IPCResult
@@ -53,6 +54,10 @@ const api: FolderDockBridge = {
   deleteBackup: (name: string) => invoke<void>(CHANNELS.deleteBackup, name),
   getPrefs: () => invoke<Prefs>(CHANNELS.getPrefs),
   setPrefs: (patch: Partial<Prefs>) => invoke<Prefs>(CHANNELS.setPrefs, patch),
+  updateState: () => invoke<UpdateStateView>(CHANNELS.updatesGetState),
+  checkForUpdates: () => invoke<UpdateStateView>(CHANNELS.updatesCheckNow),
+  installUpdate: () => invoke<void>(CHANNELS.updatesInstall),
+  openUpdateReleases: () => invoke<void>(CHANNELS.updatesOpenReleases),
   createNote: (folderName: string, baseName?: string) => invoke<NoteResult>(CHANNELS.createNote, folderName, baseName),
   startDrag: (relPath: string, additionalFiles?: string[]) => ipcRenderer.send(SEND.startDrag, relPath, additionalFiles),
   minimize: () => ipcRenderer.send(SEND.minimize),
@@ -71,6 +76,13 @@ const api: FolderDockBridge = {
     ipcRenderer.on(EVENTS.windowMaximized, listener)
     return () => {
       ipcRenderer.removeListener(EVENTS.windowMaximized, listener)
+    }
+  },
+  onUpdateStatus: (cb: (state: UpdateStateView) => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, state: UpdateStateView): void => cb(state)
+    ipcRenderer.on(EVENTS.updatesStatus, listener)
+    return () => {
+      ipcRenderer.removeListener(EVENTS.updatesStatus, listener)
     }
   }
 }

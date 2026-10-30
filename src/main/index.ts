@@ -9,6 +9,7 @@ import { startWatcher } from './library/watch'
 import { ensureRoot, resolveRoot, seedWelcome } from './library/root'
 import { resolveWithinRoot } from './library/validate'
 import { EVENTS } from '../shared/channels'
+import { RELEASES_URL, UpdateWatcher } from './updater'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -122,8 +123,9 @@ if (!gotLock) {
       rootOverridden,
       onRootChanged: async newRoot => {
         await applyRoot(newRoot)
-        mainWindow?.webContents.send('library:changed')
-      }
+        mainWindow?.webContents.send(EVENTS.libraryChanged)
+      },
+      updates: new UpdateWatcher({ getWindow: () => mainWindow, prefs: prefsStore, releasesUrl: RELEASES_URL })
     })
 
     mainWindow = createWindow({ prefs: prefsStore, isQuitting: () => quitting })

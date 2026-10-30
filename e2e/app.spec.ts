@@ -1440,4 +1440,21 @@ test.describe('FolderDock app', () => {
       await close(world)
     }
   })
+
+  test('settings shows the updates card and can check even in a development build', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await expect(settings.locator('.settings-label', { hasText: 'Updates' })).toBeVisible()
+      await expect(settings.locator('[role="switch"][aria-label="Automatic update checks"]')).toBeVisible()
+      await expect(settings.locator('.settings-sub', { hasText: 'Development build' })).toBeVisible()
+      await settings.locator('button', { hasText: 'Check now' }).click()
+      await expect(settings.locator('.settings-sub', { hasText: 'Development build' })).toBeVisible()
+      await expect(settings.locator('.primary-button', { hasText: 'Restart & update' })).toHaveCount(0)
+    } finally {
+      await close(world)
+    }
+  })
 })

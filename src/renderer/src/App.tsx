@@ -27,9 +27,17 @@ export default function App() {
     })()
     const offLib = api.onLibraryChanged(() => void useLibrary.getState().refresh())
     const offMax = api.onWindowMaximized(m => useUI.getState().setMaximized(m))
+    const offUpdates = api.onUpdateStatus(state => {
+      if (state.status === 'downloaded') {
+        useUI.getState().notify('Update ready — installs automatically when FolderDock quits')
+      } else if (state.status === 'available') {
+        useUI.getState().notify(`FolderDock ${state.version} is available — see Settings for the new build`)
+      }
+    })
     return () => {
       offLib()
       offMax()
+      offUpdates()
     }
   }, [])
 

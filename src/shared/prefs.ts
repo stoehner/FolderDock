@@ -18,6 +18,7 @@ export const DEFAULT_PREFS: Prefs = {
   fileSort: 'recent',
   closeToTray: true,
   confirmDelete: true,
+  autoCheckUpdates: true,
   hoverDelay: 'normal',
   newFolderArt: 'varied',
   backupLocation: 'Z:\\REA-Backups',
@@ -64,6 +65,7 @@ export function mergePrefs(raw: unknown): Prefs {
     fileSort: r.fileSort === 'name' || r.fileSort === 'size' ? r.fileSort : 'recent',
     closeToTray: r.closeToTray === undefined ? true : r.closeToTray === true,
     confirmDelete: r.confirmDelete === undefined ? true : r.confirmDelete === true,
+    autoCheckUpdates: r.autoCheckUpdates === undefined ? true : r.autoCheckUpdates === true,
     hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal',
     newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied',
     backupLocation:

@@ -27,7 +27,11 @@ export const CHANNELS = {
   deleteBackup: 'backup:delete',
   getPrefs: 'prefs:get',
   setPrefs: 'prefs:set',
-  createNote: 'file:createNote'
+  createNote: 'file:createNote',
+  updatesGetState: 'updates:getState',
+  updatesCheckNow: 'updates:checkNow',
+  updatesInstall: 'updates:install',
+  updatesOpenReleases: 'updates:openReleases'
 } as const
 
 export const SEND = {
@@ -39,5 +43,6 @@ export const SEND = {
 
 export const EVENTS = {
   libraryChanged: 'library:changed',
-  windowMaximized: 'window:maximized'
+  windowMaximized: 'window:maximized',
+  updatesStatus: 'updates:status'
 } as const

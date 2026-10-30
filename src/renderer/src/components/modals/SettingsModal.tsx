@@ -5,6 +5,7 @@ import { useLibrary } from '../../state/library'
 import { usePrefs } from '../../state/prefs'
 import { useUI } from '../../state/ui'
 import { isHexColor } from '../../../../shared/art-values'
+import type { UpdateStateView } from '../../../../shared/types'
 import { ColorPickerSwatch } from '../ColorPickerSwatch'
 import { Head, Foot, Toggle } from './kit'
 
@@ -25,11 +26,33 @@ export function SettingsModal() {
   const hoverDelay = prefs.hoverDelay
   const newFolderArt = prefs.newFolderArt
   const [info, setInfo] = useState<{ version: string; electron: string; overridden: boolean; defaultRoot: string | null } | null>(null)
+  const [updates, setUpdates] = useState<UpdateStateView | null>(null)
   useEffect(() => {
     void call(api.appInfo())
       .then(setInfo)
       .catch(() => undefined)
+    void call(api.updateState())
+      .then(setUpdates)
+      .catch(() => undefined)
+    return api.onUpdateStatus(state => setUpdates(state))
   }, [])
+
+  async function checkForUpdates(): Promise<void> {
+    try {
+      const state = await call(api.checkForUpdates())
+      setUpdates(state)
+    } catch (e) {
+      useUI.getState().notify(errText(e), 'error')
+    }
+  }
+
+  async function installUpdate(): Promise<void> {
+    try {
+      await call(api.installUpdate())
+    } catch (e) {
+      useUI.getState().notify(errText(e), 'error')
+    }
+  }
 
   async function changeRoot() {
     try {
@@ -117,6 +140,34 @@ export function SettingsModal() {
               Back up now
             </button>
           </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Updates</div>
+            <div className="settings-sub">{updates?.note ?? ''}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
+            {updates?.canInstall ? (
+              <button className="primary-button" onClick={() => void installUpdate()}>
+                Restart &amp; update
+              </button>
+            ) : null}
+            {updates?.portable ? (
+              <button className="secondary-button" onClick={() => void api.openUpdateReleases().catch(() => undefined)}>
+                Releases…
+              </button>
+            ) : null}
+            <button className="secondary-button" onClick={() => void checkForUpdates()}>
+              Check now
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Automatic update checks</div>
+            <div className="settings-sub">Look for a new version each time FolderDock starts. The update downloads itself and installs on quit.</div>
+          </div>
+          <Toggle on={prefs.autoCheckUpdates} onChange={v => patch({ autoCheckUpdates: v })} label="Automatic update checks" />
         </div>
         <div className="settings-row">
           <div className="settings-label">Appearance</div>

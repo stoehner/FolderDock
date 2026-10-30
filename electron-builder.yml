@@ -16,6 +16,12 @@ extraResources:
 
 asar: true
 
+publish:
+  provider: github
+  owner: stoehner
+  repo: FolderDock
+  releaseType: draft
+
 win:
   icon: build/icon.ico
   target:

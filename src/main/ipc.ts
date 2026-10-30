@@ -11,6 +11,7 @@ import { dragIconFor } from './library/drag'
 import { resolveWithinRoot } from './library/validate'
 import { scanLibrary } from './library/scan'
 import { ensureRoot } from './library/root'
+import type { UpdateWatcher } from './updater'
 
 export interface MainContext {
   getRoot(): string
@@ -18,6 +19,7 @@ export interface MainContext {
   getWindow(): BrowserWindow | null
   onRootChanged(newRoot: string): Promise<void>
   rootOverridden(): boolean
+  updates: UpdateWatcher
 }
 
 function handle<T>(channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: never[]) => Promise<T>): void {
@@ -145,6 +147,9 @@ export function registerIpc(ctx: MainContext): void {
     if (patch.alwaysOnTop !== undefined) {
       ctx.getWindow()?.setAlwaysOnTop(patch.alwaysOnTop, 'screen-saver')
     }
+    if (patch.autoCheckUpdates !== undefined) {
+      ctx.updates.setAutoCheckEnabled(patch.autoCheckUpdates === true)
+    }
     if (patch.rootPath !== undefined && patch.rootPath !== before && !ctx.rootOverridden()) {
       const root = patch.rootPath && patch.rootPath.trim() ? path.resolve(patch.rootPath.trim()) : null
       if (root) {
@@ -169,6 +174,11 @@ export function registerIpc(ctx: MainContext): void {
   handle(CHANNELS.createNote, async (_e, folderName: string, baseName?: string) =>
     ops.createNote(ctx.getRoot(), folderName, baseName)
   )
+
+  handle(CHANNELS.updatesGetState, async () => ctx.updates.view)
+  handle(CHANNELS.updatesCheckNow, async () => ctx.updates.checkNow())
+  handle(CHANNELS.updatesInstall, async () => ctx.updates.install())
+  handle(CHANNELS.updatesOpenReleases, async () => ctx.updates.openReleases())
 
   ipcMain.on(SEND.startDrag, (event, relPath: unknown, additional: unknown) => {
     try {

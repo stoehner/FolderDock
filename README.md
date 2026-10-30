@@ -73,6 +73,8 @@ Windows may show a SmartScreen warning because the binaries are not code signed.
 
 On first launch the app creates a `Documents\FolderDock` library with a welcome note. Delete that folder or pick your own root in Settings at any time.
 
+**Updates.** The installed app checks the GitHub Releases feed when it starts and downloads a new version in the background; the update applies automatically the next time you quit FolderDock (Settings → Updates can check manually or switch the automatic check off, and shows a "Restart & update" button once one is ready). Portable builds never upgrade themselves — they announce the new version and open the Releases page. Windows asks for admin permission when an update installs, exactly as it does on a first install.
+
 ## Where your files live
 
 The library root is a normal Windows folder, `Documents\FolderDock` by default. Treat it like any other folder: back it up, sync it, or point the app at a different location in Settings.
@@ -126,8 +128,8 @@ Environment overrides for development and testing:
 
 ## Testing
 
-- **Unit tests** (Vitest, 70 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, color conversions for the picker, and the drag-out carrier: marker encoding/decoding, DownloadURL construction, settle-window arithmetic, and accepted, cancelled, consumed, and native-drag dragend effects
-- **End-to-end tests** (Playwright Electron, 49 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, internal file drags between libraries and collections, cancelled drag-out, manual backups, and right-click menus
+- **Unit tests** (Vitest, 79 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, color conversions for the picker, the drag-out carrier: marker encoding/decoding, DownloadURL construction, settle-window arithmetic, and accepted, cancelled, consumed, and native-drag dragend effects, and the self-update state machine: launch checks, download progress, ready-to-install, up-to-date, and portable announce-only behavior
+- **End-to-end tests** (Playwright Electron, 50 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, internal file drags between libraries and collections, cancelled drag-out, the settings updates card, manual backups, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

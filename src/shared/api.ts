@@ -8,6 +8,7 @@ import type {
   LibrarySnapshot,
   Prefs,
   TextFileContent,
+  UpdateStateView,
   WriteTextRequest,
   WriteTextResult,
   IPCResult
@@ -43,6 +44,10 @@ export interface FolderDockBridge {
   deleteBackup(name: string): Promise<IPCResult<void>>
   getPrefs(): Promise<IPCResult<Prefs>>
   setPrefs(patch: Partial<Prefs>): Promise<IPCResult<Prefs>>
+  updateState(): Promise<IPCResult<UpdateStateView>>
+  checkForUpdates(): Promise<IPCResult<UpdateStateView>>
+  installUpdate(): Promise<IPCResult<void>>
+  openUpdateReleases(): Promise<IPCResult<void>>
   startDrag(relPath: string, additionalFiles?: string[]): void
   minimize(): void
   toggleMaximize(): void
@@ -50,6 +55,7 @@ export interface FolderDockBridge {
   getPathForFile(file: File): string
   onLibraryChanged(cb: () => void): () => void
   onWindowMaximized(cb: (maximized: boolean) => void): () => void
+  onUpdateStatus(cb: (state: UpdateStateView) => void): () => void
 }
 
 declare global {
