@@ -306,10 +306,13 @@ export function SettingsModal() {
         </div>
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
-            <div className="settings-label">Hover summary delay</div>
-            <div className="settings-sub">How quickly the file summary tooltip appears.</div>
+            <div className="settings-label">Hover summaries</div>
+            <div className="settings-sub">Small summary tooltip when hovering a file. Off keeps the shelf quiet.</div>
           </div>
           <div className="theme-choices">
+            <button className={`theme-choice${hoverDelay === 'off' ? ' active' : ''}`} onClick={() => patch({ hoverDelay: 'off' })}>
+              Off
+            </button>
             <button className={`theme-choice${hoverDelay === 'fast' ? ' active' : ''}`} onClick={() => patch({ hoverDelay: 'fast' })}>
               Fast
             </button>

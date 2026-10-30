@@ -94,6 +94,12 @@ if (!gotLock) {
     prefsStore = new PrefsStore(app.getPath('userData'))
     prefsStore.load()
 
+    // One-time migration: hover summaries become off by default from 1.3.5.
+    // The flag is written immediately so a deliberate choice afterwards is never reset.
+    if (!prefsStore.get().hoverDelayMigrated) {
+      prefsStore.patch({ hoverDelay: 'off', hoverDelayMigrated: true })
+    }
+
     const root = resolveRoot(prefsStore.get().rootPath)
     const firstRun = !fsSync.existsSync(root)
     await applyRoot(root, { seed: firstRun })

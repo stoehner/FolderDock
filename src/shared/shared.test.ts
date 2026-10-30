@@ -117,6 +117,19 @@ describe('prefs', () => {
     expect(mergePrefs({ fontSize: 'banana' }).fontSize).toBe('medium')
     expect(mergePrefs({}).fontSize).toBe('medium')
   })
+  it('defaults hover summaries to off and accepts each speed when chosen', () => {
+    expect(DEFAULT_PREFS.hoverDelay).toBe('off')
+    expect(mergePrefs({}).hoverDelay).toBe('off')
+    expect(mergePrefs({ hoverDelay: 'banana' }).hoverDelay).toBe('off')
+    expect(mergePrefs({ hoverDelay: 'fast' }).hoverDelay).toBe('fast')
+    expect(mergePrefs({ hoverDelay: 'normal' }).hoverDelay).toBe('normal')
+    expect(mergePrefs({ hoverDelay: 'slow' }).hoverDelay).toBe('slow')
+  })
+  it('marks the hover migration done only when the flag says so', () => {
+    expect(DEFAULT_PREFS.hoverDelayMigrated).toBe(false)
+    expect(mergePrefs({}).hoverDelayMigrated).toBe(false)
+    expect(mergePrefs({ hoverDelayMigrated: true }).hoverDelayMigrated).toBe(true)
+  })
   it('prunes orphans after folders disappear', () => {
     const p = { ...DEFAULT_PREFS, folderOrder: ['a', 'b', 'gone'], folderArt: { a: 'slate', gone: 'dusk' }, openFolder: 'gone' }
     const pruned = prunePrefs(p, ['a', 'b'])

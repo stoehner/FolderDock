@@ -52,7 +52,7 @@ The project started as an interactive HTML concept (preserved in [docs/reference
 
 **Preview and editing**
 
-- Hover summaries after 250 ms: real content excerpts for text and Markdown, dimensions and size for images and PDFs
+- Hover summaries are off by default (choose Fast, Normal, or Slow in Settings to turn them on): real content excerpts for text and Markdown, dimensions and size for images and PDFs
 - Click for a preview modal: sanitized Markdown rendering, plain text, actual images, and PDF pages via a sandboxed pdf.js renderer
 - Double-click to edit in the built-in editor with atomic writes, BOM preservation, and conflict detection when the file changed on disk
 
@@ -128,8 +128,8 @@ Environment overrides for development and testing:
 
 ## Testing
 
-- **Unit tests** (Vitest, 79 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, color conversions for the picker, the drag-out carrier: marker encoding/decoding, DownloadURL construction, settle-window arithmetic, and accepted, cancelled, consumed, and native-drag dragend effects, and the self-update state machine: launch checks, download progress, ready-to-install, up-to-date, and portable announce-only behavior
-- **End-to-end tests** (Playwright Electron, 50 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries, preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, internal file drags between libraries and collections, cancelled drag-out, the settings updates card, manual backups, and right-click menus
+- **Unit tests** (Vitest, 81 tests): path and name validation including Windows reserved names and traversal attempts, collision naming, excerpt extraction, preferences merging, binary sniffing, image header parsing for PNG, JPEG, GIF, BMP, WebP, and SVG, color conversions for the picker, the drag-out carrier: marker encoding/decoding, DownloadURL construction, settle-window arithmetic, and accepted, cancelled, consumed, and native-drag dragend effects, and the self-update state machine: launch checks, download progress, ready-to-install, up-to-date, and portable announce-only behavior
+- **End-to-end tests** (Playwright Electron, 51 journeys): boot and first-run seeding, collection creation, note editing saved to disk, rename, move, delete to Recycle Bin, search, hover summaries (off by default, turned on from settings), preview modal, Unsorted detection, external change watching, theme persistence, custom colors, the saved color palette, restore defaults, favorites starring and filtering, drop zone behavior, external import moves, duplicate-import skipping, moving a file out of the library to a chosen destination, internal file drags between libraries and collections, cancelled drag-out, the settings updates card, manual backups, and right-click menus
 - **Manual checklist**: native drag interactions cannot be automated. Work through [docs/native-drag-test-checklist.md](docs/native-drag-test-checklist.md) on a real Windows desktop before shipping
 
 ## Security

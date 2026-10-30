@@ -11,7 +11,7 @@ interface HoverTarget {
   y: number
 }
 
-const HOVER_DELAY_MS: Record<HoverDelay, number> = { fast: 100, normal: 250, slow: 600 }
+const HOVER_DELAY_MS: Record<Exclude<HoverDelay, 'off'>, number> = { fast: 100, normal: 250, slow: 600 }
 
 export function HoverSummary() {
   const [target, setTarget] = useState<HoverTarget | null>(null)
@@ -39,6 +39,8 @@ export function HoverSummary() {
       const relPath = el?.dataset.file
       if (!el || !relPath) return
       if (current.current === relPath) return
+      const delay = usePrefs.getState().prefs.hoverDelay
+      if (delay === 'off') return
       hide()
       current.current = relPath
       timer.current = setTimeout(() => {
@@ -46,7 +48,7 @@ export function HoverSummary() {
         visibleRef.current = true
         setTarget({ relPath, x: r.right, y: r.top })
         setVisible(true)
-      }, HOVER_DELAY_MS[usePrefs.getState().prefs.hoverDelay])
+      }, HOVER_DELAY_MS[delay])
     }
     function onOut(e: MouseEvent) {
       const el = (e.target as HTMLElement | null)?.closest?.('.document-sheet, .file-row') as HTMLElement | null

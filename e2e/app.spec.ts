@@ -262,9 +262,14 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('hover summary appears after delay and preview modal opens on click', async () => {
+  test('hover summaries turn on from settings, appear after delay, and preview opens on click', async () => {
     const world = await launch({ 'A/note.md': '# Titled\n\nBody text for the summary tooltip.' })
     try {
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal')
+      await expect(settings).toBeVisible()
+      await settings.locator('.theme-choice', { hasText: 'Fast' }).click()
+      await settings.locator('.modal-foot .primary-button').click()
       const a = world.page.locator('[data-folder="A"]')
       await a.locator('.folder-scene').click()
       const view = world.page.locator('.collection-page')
@@ -1453,6 +1458,24 @@ test.describe('FolderDock app', () => {
       await settings.locator('button', { hasText: 'Check now' }).click()
       await expect(settings.locator('.settings-sub', { hasText: 'Development build' })).toBeVisible()
       await expect(settings.locator('.primary-button', { hasText: 'Restart & update' })).toHaveCount(0)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('hover summaries stay off by default until enabled in settings', async () => {
+    const world = await launch({ 'A/note.md': '# Quiet\n\nThe shelf stays silent.' })
+    try {
+      const a = world.page.locator('[data-folder="A"]')
+      await a.locator('.folder-scene').click()
+      const view = world.page.locator('.collection-page')
+      await expect(view).toBeVisible()
+      await view.locator('.file-row', { hasText: 'note.md' }).hover()
+      await world.page.waitForTimeout(600)
+      await expect(world.page.locator('.file-summary')).toHaveCount(0)
+      // opening the preview on click still works with tooltips off
+      await view.locator('.file-row', { hasText: 'note.md' }).click()
+      await expect(world.page.locator('.preview-modal')).toBeVisible()
     } finally {
       await close(world)
     }

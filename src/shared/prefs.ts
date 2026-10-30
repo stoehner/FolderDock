@@ -19,7 +19,8 @@ export const DEFAULT_PREFS: Prefs = {
   closeToTray: true,
   confirmDelete: true,
   autoCheckUpdates: true,
-  hoverDelay: 'normal',
+  hoverDelayMigrated: false,
+  hoverDelay: 'off',
   newFolderArt: 'varied',
   backupLocation: 'Z:\\REA-Backups',
   customColors: []
@@ -66,7 +67,11 @@ export function mergePrefs(raw: unknown): Prefs {
     closeToTray: r.closeToTray === undefined ? true : r.closeToTray === true,
     confirmDelete: r.confirmDelete === undefined ? true : r.confirmDelete === true,
     autoCheckUpdates: r.autoCheckUpdates === undefined ? true : r.autoCheckUpdates === true,
-    hoverDelay: r.hoverDelay === 'fast' || r.hoverDelay === 'slow' ? r.hoverDelay : 'normal',
+    hoverDelayMigrated: r.hoverDelayMigrated === true,
+    hoverDelay:
+      r.hoverDelay === 'off' || r.hoverDelay === 'fast' || r.hoverDelay === 'slow' || r.hoverDelay === 'normal'
+        ? r.hoverDelay
+        : 'off',
     newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied',
     backupLocation:
       typeof r.backupLocation === 'string' && r.backupLocation.trim() ? r.backupLocation.trim() : DEFAULT_PREFS.backupLocation,

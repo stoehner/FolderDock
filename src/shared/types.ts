@@ -10,7 +10,7 @@ export type CardColumns = 2 | 3 | 4
 
 export type FileSort = 'recent' | 'name' | 'size'
 
-export type HoverDelay = 'fast' | 'normal' | 'slow'
+export type HoverDelay = 'off' | 'fast' | 'normal' | 'slow'
 
 export interface FileMeta {
   relPath: string
@@ -58,6 +58,7 @@ export interface Prefs {
   closeToTray: boolean
   confirmDelete: boolean
   autoCheckUpdates: boolean
+  hoverDelayMigrated: boolean
   hoverDelay: HoverDelay
   newFolderArt: string
   backupLocation: string
