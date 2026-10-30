@@ -56,3 +56,28 @@ jobs:
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Consolidate duplicate draft releases
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $hdr = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json' }
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tag = "v$version"
+          $all = Invoke-RestMethod -Uri 'https://api.github.com/repos/stoehner/FolderDock/releases?per_page=100' -Headers $hdr
+          $drafts = @($all | Where-Object { $_.draft -and $_.tag_name -eq $tag })
+          if ($drafts.Count -le 1) { "No duplicate drafts for $tag."; exit 0 }
+          $keeper = $drafts | Sort-Object { -($_.assets | Measure-Object).Count } | Select-Object -First 1
+          foreach ($extra in @($drafts | Where-Object { $_.id -ne $keeper.id })) {
+            foreach ($asset in @($extra.assets)) {
+              $tmp = Join-Path $env:RUNNER_TEMP $asset.name
+              Invoke-RestMethod -Uri $asset.url -Headers (@{ Accept = 'application/octet-stream' } + $hdr) -OutFile $tmp
+              $upload = "https://uploads.github.com/repos/stoehner/FolderDock/releases/$($keeper.id)/assets?name=$([uri]::EscapeDataString($asset.name))"
+              Invoke-RestMethod -Method Post -Uri $upload -Headers $hdr -ContentType 'application/octet-stream' -InFile $tmp
+              Remove-Item $tmp -ErrorAction SilentlyContinue
+            }
+            Invoke-RestMethod -Method Delete -Uri "https://api.github.com/repos/stoehner/FolderDock/releases/$($extra.id)" -Headers $hdr
+          }
+          "Merged duplicate drafts for $tag into release id $($keeper.id)."
