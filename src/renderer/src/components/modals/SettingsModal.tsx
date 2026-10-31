@@ -104,8 +104,25 @@ export function SettingsModal() {
   }
 
   // The card stays silent until something actually happens; then one short line.
+  // A failed check keeps its raw message behind the red marker instead of flooding the row.
   const updateSub =
-    updates && updates.status !== 'idle' && updates.status !== 'disabled' ? updates.note : ''
+    updates && updates.status !== 'idle' && updates.status !== 'disabled'
+      ? updates.status === 'error'
+        ? 'Update check failed.'
+        : updates.note
+      : ''
+
+  function showUpdateError(): void {
+    useUI.getState().openModal({
+      type: 'confirm',
+      icon: 'info',
+      title: 'Update check failed',
+      subtitle: 'Raw message from the updater.',
+      description: updates?.note ?? '',
+      confirmLabel: 'Close',
+      onConfirm: () => useUI.getState().closeModal()
+    })
+  }
 
   return (
     <section className="modal" role="dialog" aria-modal="true" aria-label="Settings">
@@ -129,9 +146,7 @@ export function SettingsModal() {
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>
             <div className="settings-label">Backup</div>
-            <div className="settings-sub">
-              {prefs.backupLocation} · manual copies of the whole library, one timestamped folder per backup
-            </div>
+            <div className="settings-sub">{prefs.backupLocation}</div>
           </div>
           <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
             <button className="secondary-button" onClick={() => void changeBackup()}>
@@ -151,6 +166,11 @@ export function SettingsModal() {
             {updateSub ? <div className="settings-sub">{updateSub}</div> : null}
           </div>
           <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
+            {updates?.status === 'error' ? (
+              <button className="update-error" aria-label="Update check failed - show details" onClick={showUpdateError}>
+                !
+              </button>
+            ) : null}
             {updates?.canInstall ? (
               <button className="primary-button" onClick={() => void installUpdate()}>
                 Restart &amp; update
@@ -251,7 +271,6 @@ export function SettingsModal() {
                   className={`swatch small${newFolderArt === id ? ' selected' : ''}`}
                   style={{ background: artStyles[id]?.art }}
                   onClick={() => patch({ newFolderArt: id })}
-                  title={id}
                   aria-label={`Default style ${id}`}
                 />
               ))}

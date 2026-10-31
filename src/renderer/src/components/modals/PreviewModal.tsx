@@ -118,7 +118,7 @@ export function PreviewModal() {
             <div className="preview-kicker">LIVE FILE PREVIEW</div>
             <div className="preview-title">{name}</div>
           </div>
-          <button className="preview-close" onClick={closePreview} title="Close preview" aria-label="Close file preview">
+          <button className="preview-close" onClick={closePreview} aria-label="Close file preview">
             {ico('x')}
           </button>
         </div>
@@ -186,7 +186,6 @@ export function PreviewModal() {
           <button
             className="secondary-button danger-button"
             onClick={() => promptDeleteFiles([relPath])}
-            title="Move this file to the Windows Recycle Bin"
           >
             {ico('trash')}Delete
           </button>

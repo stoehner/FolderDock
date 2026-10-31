@@ -1,4 +1,4 @@
-import { ART_SECTIONS, artFor, artIdFor, artStyles } from '../../lib/art'
+import { ART_SECTIONS, artFor, artStyles } from '../../lib/art'
 import { isHexColor } from '../../../../shared/art-values'
 import { usePrefs } from '../../state/prefs'
 import { useUI } from '../../state/ui'
@@ -13,7 +13,6 @@ export function RecolorFolderModal({ folder }: { folder: string }) {
   const defaultId = newFolderArt !== 'varied' ? newFolderArt : undefined
   const current = folderArt[folder]
   const autoArt = artFor(folder, undefined, defaultId)
-  const autoId = artIdFor(folder, undefined, defaultId)
   const customActive = current !== undefined && isHexColor(current)
   return (
     <section className="modal" role="dialog" aria-modal="true" aria-label="Change folder color">
@@ -32,7 +31,6 @@ export function RecolorFolderModal({ folder }: { folder: string }) {
             className={`swatch auto${current === undefined ? ' selected' : ''}`}
             style={{ background: autoArt.art }}
             onClick={() => unsetFolderArt(folder)}
-            title={`Auto — follows the name-based color (${autoId})`}
             aria-label="Auto color"
           />
           <ColorPickerSwatch value={customActive ? current : undefined} onPick={hex => setFolderArt(folder, hex)} />
@@ -47,7 +45,6 @@ export function RecolorFolderModal({ folder }: { folder: string }) {
                   className={`swatch${current === id ? ' selected' : ''}`}
                   style={{ background: artStyles[id]?.art }}
                   onClick={() => setFolderArt(folder, id)}
-                  title={id}
                   aria-label={`Art style ${id}`}
                 />
               ))}

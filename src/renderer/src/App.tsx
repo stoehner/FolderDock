@@ -160,7 +160,7 @@ export default function App() {
           <span id="statusText">{libError ? 'Library error — see above' : 'Local library · watching changes'}</span>
         </div>
         <div className="links">
-          <button id="importBtn" onClick={() => void chooseImportOp()} title="Import files from this computer">
+          <button id="importBtn" onClick={() => void chooseImportOp()}>
             Import files
           </button>
           <span>·</span>
@@ -168,19 +168,15 @@ export default function App() {
             onClick={() => {
               void api.openRoot().catch(() => undefined)
             }}
-            title="Open the library folder in File Explorer"
           >
             Open root
           </button>
           <span>·</span>
-          <button onClick={() => useUI.getState().openModal({ type: 'help' })} title="See keyboard shortcuts and how it works">
-            How it works
-          </button>
+          <button onClick={() => useUI.getState().openModal({ type: 'help' })}>How it works</button>
           <span>·</span>
           <button
             className="footer-icon"
             onClick={() => useUI.getState().openModal({ type: 'settings' })}
-            title="Settings"
             aria-label="Open settings"
           >
             {ico('gear')}

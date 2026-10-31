@@ -46,7 +46,6 @@ export function PaperSheet({
       data-file={file.relPath}
       data-folder={folderName}
       aria-label={`${file.name}: drag this sheet out, or press Enter to preview`}
-      title={`Drag ${file.name} out · click to preview`}
       onClick={() => openPreview(file.relPath)}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {

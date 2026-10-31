@@ -656,6 +656,23 @@
   margin-top: 3px;
   word-break: break-all;
 }
+.update-error {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e5484d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 .theme-choices {
   display: flex;
   gap: 6px;

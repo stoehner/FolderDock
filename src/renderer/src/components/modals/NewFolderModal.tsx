@@ -48,7 +48,6 @@ export function NewFolderModal({ art }: { art: string }) {
               className={`swatch small${selected === id ? ' selected' : ''}`}
               style={{ background: artStyles[id]?.art }}
               onClick={() => setSelected(id)}
-              title={id}
               aria-label={`Art style ${id}`}
             />
           ))}

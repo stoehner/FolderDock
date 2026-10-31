@@ -36,7 +36,6 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
       tabIndex={0}
       role="button"
       aria-label={`Preview ${file.name}`}
-      title="Drag out or into another collection · click to preview · double-click to edit · Ctrl+click to select"
       onClick={e => {
         if (e.ctrlKey || e.metaKey) {
           useUI.getState().toggleSelect(file.relPath)
@@ -83,7 +82,6 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
         }}
         aria-pressed={isStarred}
         aria-label={isStarred ? `Remove ${file.name} from favorites` : `Add ${file.name} to favorites`}
-        title={isStarred ? 'Remove from favorites' : 'Add to favorites'}
       >
         {ico('star')}
       </button>
@@ -95,7 +93,6 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
           openMenu({ kind: 'file', relPath: file.relPath, x: r.right - 200, y: r.bottom + 4 })
         }}
         aria-label={`Options for ${file.name}`}
-        title="File options"
       >
         {ico('more')}
       </button>

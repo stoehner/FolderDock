@@ -18,6 +18,7 @@ export type Modal =
       confirmLabel: string
       onConfirm: () => Promise<void> | void
       onCancel?: () => void
+      icon?: string
     }
   | { type: 'move-file'; relPath: string }
   | { type: 'move-files'; relPaths: string[] }

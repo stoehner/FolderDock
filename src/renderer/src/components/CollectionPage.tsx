@@ -80,7 +80,6 @@ export function CollectionPage({ folder }: PageProps) {
         <button
           className="page-back"
           onClick={() => setOpenFolder(null)}
-          title="Back to all collections"
           aria-label="Back to all collections"
         >
           {ico('arrow', 'flip-x')}
@@ -98,7 +97,6 @@ export function CollectionPage({ folder }: PageProps) {
           <button
             className="secondary-button"
             onClick={() => void createNoteOp(folder.name)}
-            title="New Markdown note"
             aria-label="New note"
             hidden={folder.virtual}
           >
@@ -108,7 +106,6 @@ export function CollectionPage({ folder }: PageProps) {
           <button
             className="secondary-button"
             onClick={() => void chooseImportOp(folder.name)}
-            title="Import from Windows"
             aria-label="Import from Windows"
           >
             {ico('upload')}

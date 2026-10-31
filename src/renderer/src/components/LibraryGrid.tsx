@@ -352,7 +352,6 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
           tabIndex={0}
           role="button"
           aria-label={`Reorder ${folder.name}`}
-          title="Drag to reorder collections"
           onDragStart={e => {
             e.dataTransfer.setData('application/x-folderdock-folder', folder.name)
             e.dataTransfer.effectAllowed = 'move'
@@ -372,7 +371,6 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
           }}
           aria-pressed={folderStarred}
           aria-label={folderStarred ? `Remove ${folder.name} from favorites` : `Add ${folder.name} to favorites`}
-          title={folderStarred ? 'Remove from favorites' : 'Add to favorites'}
         >
           {ico('star')}
         </button>
@@ -383,7 +381,6 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
             void createNoteOp(folder.name)
           }}
           aria-label={`New note in ${folder.name}`}
-          title="New note"
           hidden={folder.virtual}
         >
           {ico('plus')}
@@ -396,7 +393,6 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
             openMenu({ kind: 'folder', folder: folder.name, x: r.left, y: r.bottom + 4 })
           }}
           aria-label={`Options for ${folder.name}`}
-          title="Collection options"
         >
           {ico('more')}
         </button>
@@ -408,7 +404,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
             <button
               className="inside-tool"
               onClick={() => void createNoteOp(folder.name)}
-              title="New Markdown note"
+              aria-label={`New note in ${folder.name}`}
               hidden={folder.virtual}
             >
               {ico('note')}
@@ -416,7 +412,7 @@ function FolderCard({ folder, isOpen, previewRelPath }: CardProps) {
             <button
               className="inside-tool"
               onClick={() => void chooseImportOp(folder.name)}
-              title="Import from Windows"
+              aria-label={`Import into ${folder.name}`}
             >
               {ico('upload')}
             </button>

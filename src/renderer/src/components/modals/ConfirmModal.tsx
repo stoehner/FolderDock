@@ -16,7 +16,7 @@ export function ConfirmModal({ modal }: { modal: Extract<Modal, { type: 'confirm
   }
   return (
     <section className="modal" role="dialog" aria-modal="true" aria-label={modal.title}>
-      <Head icon="trash" title={modal.title} sub={modal.subtitle} onClose={cancel} />
+      <Head icon={modal.icon ?? 'trash'} title={modal.title} sub={modal.subtitle} onClose={cancel} />
       <div className="modal-content">
         <p className="helper">{modal.description}</p>
       </div>

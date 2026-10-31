@@ -1457,6 +1457,8 @@ test.describe('FolderDock app', () => {
       await expect(settings.locator('[role="switch"][aria-label="Automatic update checks"]')).toHaveCount(0)
       await expect(settings.locator('.settings-sub', { hasText: 'Development build' })).toHaveCount(0)
       await expect(settings.locator('.primary-button', { hasText: 'Restart & update' })).toHaveCount(0)
+      // failures surface as a small red marker, never as raw error text in the row
+      await expect(settings.locator('.update-error')).toHaveCount(0)
       await settings.locator('button', { hasText: 'Check for updates' }).click()
       await expect(world.page.locator('.toast')).toHaveCount(0)
       await expect(settings.locator('.primary-button', { hasText: 'Restart & update' })).toHaveCount(0)

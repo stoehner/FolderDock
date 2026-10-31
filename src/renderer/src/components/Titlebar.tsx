@@ -10,18 +10,17 @@ export function Titlebar() {
       <span className="brand">FolderDock</span>
       <span className="submark">/ personal library</span>
       <div className="window-actions">
-        <button className="win-btn" onClick={() => api.minimize()} aria-label="Minimize window" title="Minimize">
+        <button className="win-btn" onClick={() => api.minimize()} aria-label="Minimize window">
           {ico('minus')}
         </button>
         <button
           className="win-btn"
           onClick={() => api.toggleMaximize()}
           aria-label={maximized ? 'Restore window' : 'Maximize window'}
-          title={maximized ? 'Restore' : 'Maximize'}
         >
           {ico(maximized ? 'restore' : 'maximize')}
         </button>
-        <button className="win-btn close" onClick={() => api.close()} aria-label="Close window" title="Close">
+        <button className="win-btn close" onClick={() => api.close()} aria-label="Close window">
           {ico('x')}
         </button>
       </div>

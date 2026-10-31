@@ -71,15 +71,6 @@ export function ColorPickerSwatch({
 
   return (
     <span className="swatch-group">
-      <button
-        ref={triggerRef}
-        className={`swatch custom${small ? ' small' : ''}${custom ? ' selected' : ''}`}
-        style={custom || (open && valid) ? { background: customArtFor(custom ? (value as string) : normalizeHex(hex)).art } : undefined}
-        onClick={togglePanel}
-        title="Custom color - pick a color; applied colors are saved"
-        aria-label="Custom color"
-        aria-expanded={open}
-      />
       {customColors.map(c => (
         <span className="saved-swatch" key={c}>
           <button
@@ -87,18 +78,24 @@ export function ColorPickerSwatch({
             style={{ background: customArtFor(c).art }}
             onClick={() => apply(c)}
             aria-label={`Saved color ${c}`}
-            title={`${c} (click to use)`}
           />
           <button
             className="saved-delete"
             onClick={() => patch({ customColors: customColors.filter(x => x !== c) })}
             aria-label={`Delete saved color ${c}`}
-            title="Delete this saved color"
           >
             {ico('x')}
           </button>
         </span>
       ))}
+      <button
+        ref={triggerRef}
+        className={`swatch custom${small ? ' small' : ''}${custom ? ' selected' : ''}`}
+        style={custom || (open && valid) ? { background: customArtFor(custom ? (value as string) : normalizeHex(hex)).art } : undefined}
+        onClick={togglePanel}
+        aria-label="Custom color"
+        aria-expanded={open}
+      />
       {open ? (
         <ColorPickerPanel
           hex={hex}

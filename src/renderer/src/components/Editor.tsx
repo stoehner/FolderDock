@@ -103,7 +103,7 @@ export function EditorModal() {
         </p>
       </div>
       <div className="modal-foot">
-        <button className="secondary-button" onClick={() => void reloadEditorOp()} title="Discard your edits and load the file from disk">
+        <button className="secondary-button" onClick={() => void reloadEditorOp()}>
           Reload from disk
         </button>
         <button className="secondary-button" onClick={requestCloseEditor}>

@@ -23,13 +23,12 @@ export function Toolbar() {
   const snapshot = useLibrary(s => s.snapshot)
 
   const folders = snapshot?.folders.length ?? 0
-  const root = snapshot?.root ?? ''
   const [zoneOver, setZoneOver] = useState(false)
 
   return (
     <div className="toolbar">
       <div className="actionbar">
-        <label className="search" title={root}>
+        <label className="search">
           {ico('search')}
           <input
             id="searchInput"
@@ -45,7 +44,7 @@ export function Toolbar() {
           {ico('plus')}
           <span>New folder</span>
         </button>
-        <button className="secondary-button" onClick={() => void createNoteOp()} title="Create a quick Markdown note">
+        <button className="secondary-button" onClick={() => void createNoteOp()} aria-label="Create a quick Markdown note">
           {ico('note')}
         </button>
       </div>
@@ -53,7 +52,6 @@ export function Toolbar() {
         className={`dropzone${zoneOver ? ' drag-over' : ''}`}
         role="button"
         aria-label="Drop files to add them to FolderDock"
-        title="Drop files here to move them into your library, or click to browse"
         onClick={() => void chooseImportOp()}
         onDragOver={e => {
           if (isInternalDrag(e) || Array.from(e.dataTransfer.types).includes('Files')) {
