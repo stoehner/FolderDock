@@ -1,6 +1,8 @@
 # FolderDock — Implementation Report
 
-Date: 2026-10-17 · Version 1.0.0 · Windows 11, x64
+Date: 2026-10-17 (v1.0.0) · Windows 11, x64
+
+> **Revised 2026-10-31 (v1.3.9):** the drag model section and the deviation list were updated to current behavior, which changed after v1.0.0 — most notably in **v1.3.7 (2026-10-21/27)**, when drag-out became a move and imports moved sources in. Test and deliverable counts below reflect v1.0.0 as originally delivered; the README carries the current numbers.
 
 ## Stack
 
@@ -15,13 +17,15 @@ Electron 44 + React 19 + TypeScript 6 (strict) + Vite 8 via electron-vite 6, Tai
 
 ## Drag model (design decision)
 
-Every sheet/row drag triggers a **native** OS drag of the real file (`dragstart` → `preventDefault` → IPC → `sender.startDrag({ file, files, icon })`). Semantics are resolved at drop time by path:
+**Current (since v1.3.7, 2026-10-27).** Single-file drag-out is a true **move out of the library**:
 
-- Dropped into an external target → the original stays (copy semantics).
-- Dropped back onto a different collection card → real filesystem **move** (via the same `files:drop` channel used by Explorer drops, which detects library-internal paths).
-- Dropped onto its own collection or the shelf background → no-op with an explanatory toast.
+- The renderer starts an HTML5 drag carrying the `DownloadURL` flavour that names the file's real `file://` path, plus an internal `application/x-folderdock-files` marker for in-app drops.
+- After `dragend`, if the OS reports the file was delivered (`copy`/`move` effect), the app waits a settle window (1.2 s + 1 s per 10 MB, max 15 s), re-scans, and recycles the library original (`shell.trashItem`). Toast: `"name" moved out of the library · original went to the Recycle Bin`.
+- Alt/shortcut drops, refusals, and cancels keep the original — only delivered drags retire it.
+- Multi-selection drags still use native `sender.startDrag({ file, files, icon })` with copy semantics (a Chromium drag can carry only one `DownloadURL` file), so Ctrl-selected rows drag out as plain copies with originals kept.
+- Drop-in from Explorer and dialog imports **move** sources into the library: same-drive files are renamed into the collection, cross-drive files are copied and the source recycled (falling back to a copy if recycling fails); byte-identical duplicates are skipped with an explanation; same-name collisions get ` (2)` suffixes. Internal self-drops between collections remain real filesystem moves.
 
-This unifies Explorer drop-in and internal moves through one code path and satisfies "dragging out must not delete or move the original".
+**History.** v1.0.0 (2026-10-17) shipped the original handoff design: every drag triggered a native OS drag of the real file (`dragstart` → `preventDefault` → IPC → `sender.startDrag`), and external drops left the original in place (copy-out). Manual probing on 2026-10-27 found that this runtime refuses renderer-built blob/File drags in Explorer and that native drags cannot report the OS drop outcome — so the original could never be retired safely. The `DownloadURL` carrier landed with full content in every probed target and provides a reliable `dragend` outcome, which is why the model above replaced it (see deviation 10).
 
 ## Verification
 
@@ -34,14 +38,15 @@ This unifies Explorer drop-in and internal moves through one code path and satis
 ## Deviations from the handoff / prototype
 
 1. **Simulated external drop zone removed**, as instructed once native drag-out was implemented.
-2. **Drag imagery** is a colored type icon (from `resources/drag/*.png`) rather than a live thumbnail; `startDrag` only accepts image assets and generating faithful per-file thumbnails would require an image-processing dependency. Documented as a limitation.
-3. **Import semantics**: Explorer drag-in and dialog import **copy** (originals untouched); moving out of *Unsorted* or between collections uses real moves. The prototype's "files added to the selected collection" toast pattern is kept.
+2. **Drag imagery** is a colored type icon (from `resources/drag/*.png`) rather than a live thumbnail; `startDrag` only accepts image assets and generating faithful per-file thumbnails would require an image-processing dependency. Documented as a limitation. Since v1.3.7 this applies only to the native multi-selection drag; single-file drags are carried by the HTML5 `DownloadURL` flavour and Chromium supplies their drag imagery.
+3. **Import semantics** (unchanged at v1.0.0: Explorer drag-in and dialog import **copied**, originals untouched). Since v1.3.7 (2026-10-21/27) imports **move** the source into the library — same drive: renamed in place; other drive: copied and the source recycled (fallback to copy if recycling fails) — with byte-identical duplicates skipped and ` (2)` collision suffixes. The prototype's "files added to the selected collection" toast pattern is kept.
 4. **Full-screen drop overlay replaced** with a slim bottom hint bar plus per-card glow — the overlay obscured the drop targets themselves.
 5. **Side preview** docks to the right edge below the titlebar; on narrow windows (<1020 px) it overlays the shelf, and the window auto-widens once (up to 1040 px) when opened if the work area allows. The prototype floated the panel outside the mock window, which isn't possible inside a real window.
 6. **Root-level loose files** are exposed via a virtual *Unsorted* collection (the prototype had no equivalent); the name is reserved against real folder creation.
 7. **Deletes go to the Recycle Bin** (`shell.trashItem`) rather than hard-deleting — safer than the prototype's hard removal.
 8. **Nested subdirectories** inside a collection are not displayed (flat collection model, matching the prototype's card list). Files in them are untouched and invisible in the UI.
 9. The prototype's fake window buttons (minimize/maximize/close/reset-to-demo) became real window controls; "reset" was a demo-only concept.
+10. **Drag-out is a true move-out (since v1.3.7, 2026-10-27) — deliberate deviation from the handoff.** The handoff required that dragging a file to an external target must not delete or move the original, and prohibited HTML5 carriers. Manual probing that day showed native `startDrag` cannot report the OS drop outcome (the original could never be retired safely) and that this runtime refuses renderer blob/File drags in Explorer, while the `DownloadURL` carrier delivers the real file everywhere it was probed and reports the outcome. Adopted so that a plain drag-out can no longer multiply copies via drag-out + import-back (the byte-identical-skipping commit of 2026-10-27 states this rationale) and so the shelf behaves like a move between places. The original is only retired when the OS reports delivery; Alt/shortcut and cancelled/failed drops keep it, and multi-selection drags remain native copies. The README documents the current semantics.
 
 ## Limits & known constraints
 
