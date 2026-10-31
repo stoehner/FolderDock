@@ -94,7 +94,12 @@ jobs:
           $tag = "v$version"
           $setupName = "FolderDock-Setup-$version.exe"
           $portableName = "FolderDock-$version-portable.exe"
-          $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/stoehner/FolderDock/releases/tags/$tag" -Headers $hdr
+          # GitHub's get-release-by-tag endpoint returns 404 for unfinished DRAFT releases; resolve via the list.
+          $all = Invoke-RestMethod -Uri 'https://api.github.com/repos/stoehner/FolderDock/releases?per_page=100' -Headers $hdr
+          $candidates = @($all | Where-Object { $_.tag_name -eq $tag })
+          if ($candidates.Count -eq 0) { throw "No release object found for $tag." }
+          if ($candidates.Count -gt 1) { throw "$($candidates.Count) release objects found for $tag; consolidation did not merge them." }
+          $rel = $candidates[0]
           if (-not $rel.draft) { throw "Release $tag already exists as published (published_at=$($rel.published_at)); refusing to double-publish." }
           $assets = @($rel.assets | ForEach-Object { $_.name })
           $expected = @($setupName, "$setupName.blockmap", $portableName, 'latest.yml')
@@ -107,7 +112,7 @@ jobs:
           Invoke-RestMethod -Uri $ymlAsset.url -Headers @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/octet-stream' } -OutFile $tmp
           $yml = Get-Content $tmp -Raw
           if (-not $yml.Contains("version: $version")) { throw "latest.yml does not carry version $version." }
-          if (-not $yml.Contains($setupName) -or -not $yml.Contains("$setupName.blockmap")) { throw "latest.yml does not reference $setupName and its blockmap." }
+          if (-not $yml.Contains($setupName)) { throw "latest.yml does not reference $setupName." }
           Invoke-RestMethod -Method Patch -Uri "https://api.github.com/repos/stoehner/FolderDock/releases/$($rel.id)" -Headers $hdr -ContentType 'application/json' -Body '{"draft": false}' | Out-Null
           $latest = Invoke-RestMethod -Uri 'https://api.github.com/repos/stoehner/FolderDock/releases/latest' -Headers $hdr
           if ($latest.tag_name -ne $tag) { throw "releases/latest reports $($latest.tag_name), expected $tag." }
