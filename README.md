@@ -143,6 +143,7 @@ Environment overrides for development and testing:
 
 ## Documentation
 
+- [CONTEXT.md](CONTEXT.md): domain and architecture vocabulary — the exact meaning of every term agents and humans rely on
 - [Implementation report](docs/implementation-report.md): architecture, decisions, deviations, and known limitations
 - [Native drag test checklist](docs/native-drag-test-checklist.md): manual Windows verification steps
 - [Reference material](docs/reference): the original interactive HTML concept and the build handoff it was derived from
