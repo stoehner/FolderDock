@@ -6,6 +6,14 @@ import path from 'node:path'
 
 const projectRoot = process.cwd()
 
+/** The main-process startDrag calls recorded under FOLDERDOCK_E2E_NODRAG=1. */
+async function startDragCalls(app: ElectronApplication): Promise<{ relPath: string; extra: number }[]> {
+  return app.evaluate(() => {
+    const log = (globalThis as { __fdE2eStartDragLog?: { relPath: string; extra: number }[] }).__fdE2eStartDragLog
+    return log ?? []
+  })
+}
+
 interface World {
   app: ElectronApplication
   page: Page
@@ -32,7 +40,8 @@ async function launch(seedFiles?: Record<string, string>): Promise<World> {
       FOLDERDOCK_ROOT: root,
       FOLDERDOCK_USER_DATA: userData,
       FOLDERDOCK_SOFTWARE_GPU: '1',
-      FOLDERDOCK_DEVTOOLS: '0'
+      FOLDERDOCK_DEVTOOLS: '0',
+      FOLDERDOCK_E2E_NODRAG: '1'
     }
   })
   const page = await app.firstWindow()
@@ -1388,41 +1397,39 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('an internal file drag dropped onto another collection moves the file there', async () => {
+  test('a library file dropped onto another collection moves there (import retarget)', async () => {
     const world = await launch({ 'A/one.md': 'x', 'B/keep.md': 'y' })
     try {
-      const src = world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')
-      await expect(src).toBeVisible()
-      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', '[data-folder="B"]', {
-        dragover: true,
-        drop: true,
-        dragend: true
-      })
+      // Native self-drops deliver real files through the import path (main importPaths
+      // renames inside-root paths); the OS delivery step itself cannot be simulated in
+      // tests, so the retarget is driven through the public preload API with abs paths,
+      // exactly as a real drop delivers them. The raw call does not toast (that glue
+      // lives in the renderer op); the watcher mirrors the rename into the UI.
+      const srcAbs = path.join(world.root, 'A', 'one.md')
+      await world.page.evaluate(abs => {
+        const fd = (globalThis as unknown as { folderdock: { dropFiles: (paths: string[], target: string) => Promise<unknown> } }).folderdock
+        return fd.dropFiles([abs], 'B')
+      }, srcAbs)
       await expect.poll(() => fsSync.existsSync(path.join(world.root, 'A', 'one.md')), { timeout: 10_000 }).toBe(false)
       expect(fsSync.readFileSync(path.join(world.root, 'B', 'one.md'), 'utf8')).toBe('x')
-      await expect(world.page.locator('.toast')).toContainText('1 file moved into B')
-      // the drop was consumed internally: a later dragend must not move or delete anything.
-      // (synthetic dragend always reports effect 'none' — accepted-effect handling is unit-tested)
-      await world.page.waitForTimeout(2000)
-      expect(fsSync.existsSync(path.join(world.root, 'B', 'one.md'))).toBe(true)
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toHaveCount(0)
     } finally {
       await close(world)
     }
   })
 
-  test('an internal file drag dropped back onto its own collection changes nothing', async () => {
+  test('a library file dropped onto its own collection changes nothing on disk', async () => {
     const world = await launch({ 'A/one.md': 'x' })
     try {
       await world.page.locator('[data-folder="A"] .folder-scene').click()
       const view = world.page.locator('.collection-page')
       await expect(view).toBeVisible()
       await expect(view.locator('.file-row[data-file="A/one.md"]')).toBeVisible()
-      await runInternalScriptDrag(world.page, '.collection-page .file-row[data-file="A/one.md"]', '.dropzone', {
-        dragover: true,
-        drop: true,
-        dragend: true
-      })
-      await expect(world.page.locator('.toast')).toContainText('Already in this collection.')
+      // the raw preload call intentionally does not toast; assert the no-op disk truth
+      await world.page.evaluate(abs => {
+        const fd = (globalThis as unknown as { folderdock: { dropFiles: (paths: string[], target: string) => Promise<unknown> } }).folderdock
+        return fd.dropFiles([abs], 'A')
+      }, path.join(world.root, 'A', 'one.md'))
       expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
       await expect(view.locator('.file-row[data-file="A/one.md"]')).toBeVisible()
     } finally {
@@ -1430,17 +1437,35 @@ test.describe('FolderDock app', () => {
     }
   })
 
-  test('a cancelled drag out of the window keeps the library file', async () => {
+  test('a native drag out keeps the library file until the disk says otherwise', async () => {
     const world = await launch({ 'A/one.md': 'x' })
     try {
       await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
-      // no drop — the dragend falls through the rejected-effect guard, the settle timer never fires
-      // (synthetic dragend always reports effect 'none'; accepted effects are unit-tested in dragOut.test.ts)
-      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, { dragend: true })
-      await world.page.waitForTimeout(2000)
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, {})
+      // the native carrier was handed the file (E2E env guard records the request)
+      const calls = await startDragCalls(world.app)
+      expect(calls).toEqual([{ relPath: 'A/one.md', extra: 0 }])
+      // the file is still in the library (refused / cancelled / copy release): the settle
+      // scan must recycle nothing and stay quiet
+      await world.page.waitForTimeout(2200)
       await expect(world.page.locator('.toast')).toHaveCount(0)
       await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
       expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a native drag out applies the move-out once the OS removes the file', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, {})
+      // a real same-drive drop moves the file away; simulate the delivery by deleting it
+      await fsp.rm(path.join(world.root, 'A', 'one.md'))
+      await expect.poll(() => fsSync.existsSync(path.join(world.root, 'A', 'one.md')), { timeout: 5_000 }).toBe(false)
+      await expect(world.page.locator('.toast')).toContainText('moved out of the library', { timeout: 5_000 })
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toHaveCount(0)
     } finally {
       await close(world)
     }

@@ -46,6 +46,7 @@ export function createWindow(deps: WindowDeps): BrowserWindow {
   })
 
   win.once('ready-to-show', () => win.show())
+
   if (bounds?.maximized) win.maximize()
   if (prefs.alwaysOnTop) win.setAlwaysOnTop(true, 'screen-saver')
 

@@ -1,6 +1,6 @@
 import type { FileMeta } from '../../../shared/types'
 import { formatSize } from '../lib/api'
-import { finishOutDrag, startOutDrag } from '../lib/dragOut'
+import { startOutDrag } from '../lib/dragOut'
 import { ico } from '../lib/icons'
 import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
@@ -64,7 +64,6 @@ export function FileRow({ file, selected }: { file: FileMeta; selected: boolean 
         const others = inSelection && selection.length > 1 ? selection.filter(p => p !== file.relPath) : undefined
         startOutDrag(e, file.relPath, root, others)
       }}
-      onDragEnd={e => finishOutDrag(e, file.relPath, file.size)}
     >
       <span className={`typeicon ${kindClass(file)}`}>{ico(iconFor(file))}</span>
       <div className="file-info">

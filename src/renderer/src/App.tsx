@@ -3,7 +3,7 @@ import { api } from './lib/api'
 import { ico } from './lib/icons'
 import { useLibrary } from './state/library'
 import { usePrefs } from './state/prefs'
-import { targetFolderForNewItems, useUI } from './state/ui'
+import { useUI } from './state/ui'
 import { Titlebar } from './components/Titlebar'
 import { Toolbar } from './components/Toolbar'
 import { LibraryGrid } from './components/LibraryGrid'
@@ -13,9 +13,7 @@ import { PreviewModal } from './components/modals/PreviewModal'
 import { HoverSummary } from './components/HoverSummary'
 import { DropHint, Toast } from './components/Toast'
 import { SelectionBar } from './components/SelectionBar'
-import { createNoteOp, chooseImportOp, dropBackgroundOp, internalDropOp, requestCloseEditor, saveEditorOp } from './lib/ops'
-import { INTERNAL_FILES_TYPE, markInternalDropHandled, readInternalDrop } from './lib/dragOut'
-
+import { createNoteOp, chooseImportOp, dropBackgroundOp, requestCloseEditor, saveEditorOp } from './lib/ops'
 export default function App() {
   const booted = useUI(s => s.booted)
   const libError = useLibrary(s => s.error)
@@ -116,8 +114,7 @@ export default function App() {
         if (Array.from(e.dataTransfer.types).includes('Files')) useUI.getState().dragEnter(e as unknown as DragEvent)
       }}
       onDragOver={e => {
-        const types = Array.from(e.dataTransfer.types)
-        if (types.includes(INTERNAL_FILES_TYPE) || types.includes('Files')) {
+        if (Array.from(e.dataTransfer.types).includes('Files')) {
           e.preventDefault()
           e.dataTransfer.dropEffect = 'move'
         }
@@ -126,14 +123,7 @@ export default function App() {
         if (Array.from(e.dataTransfer.types).includes('Files') && !e.relatedTarget) useUI.getState().dragReset()
       }}
       onDrop={e => {
-        const internal = readInternalDrop(e)
-        if (internal) {
-          e.preventDefault()
-          markInternalDropHandled(internal.payload)
-          const target = targetFolderForNewItems()
-          if (!target) useUI.getState().notify('Create a collection first.')
-          else void internalDropOp(internal.files, target)
-        } else if (e.dataTransfer.files.length > 0) {
+        if (e.dataTransfer.files.length > 0) {
           e.preventDefault()
           const paths = Array.from(e.dataTransfer.files)
             .map(f => {

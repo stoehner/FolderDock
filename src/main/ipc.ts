@@ -183,6 +183,14 @@ export function registerIpc(ctx: MainContext): void {
   ipcMain.on(SEND.startDrag, (event, relPath: unknown, additional: unknown) => {
     try {
       if (typeof relPath !== 'string') return
+      // E2E harness: never start a real OLE drag loop; record what would be dragged.
+      if (process.env.FOLDERDOCK_E2E_NODRAG === '1') {
+        const g = globalThis as { __fdE2eStartDragLog?: { relPath: string; extra: number }[] }
+        const log = g.__fdE2eStartDragLog ?? []
+        log.push({ relPath, extra: Array.isArray(additional) ? additional.length : 0 })
+        g.__fdE2eStartDragLog = log
+        return
+      }
       const rest =
         Array.isArray(additional) && additional.every(x => typeof x === 'string') ? additional.filter(x => x !== relPath) : []
       const absPaths = [relPath, ...rest]
