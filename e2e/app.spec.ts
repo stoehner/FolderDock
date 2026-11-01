@@ -14,6 +14,18 @@ async function startDragCalls(app: ElectronApplication): Promise<{ relPath: stri
   })
 }
 
+// One CI e2e run (2026-11-01, release ride) crashed a prefs poll with
+// "Unexpected non-whitespace character after JSON" on a file the store writes
+// strictly atomically (tmp + rename). Treat any unparsable/absent snapshot as
+// "not yet" and let the poll retry instead of aborting the journey.
+function readPrefs(prefsFile: string): Record<string, unknown> | undefined {
+  try {
+    return JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')) as Record<string, unknown>
+  } catch {
+    return undefined
+  }
+}
+
 interface World {
   app: ElectronApplication
   page: Page
@@ -411,7 +423,8 @@ test.describe('FolderDock app', () => {
         .toBe(true)
       await world.app.close()
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
-      const saved = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).windowBounds
+      const saved = (readPrefs(prefsFile) as { windowBounds?: { width: number; height: number; x: number; y: number } } | undefined)?.windowBounds
+      if (!saved) throw new Error('ui-prefs.json lacks parseable windowBounds after close')
       expect(Math.abs(saved.width - 520)).toBeLessThanOrEqual(3)
       expect(Math.abs(saved.height - 590)).toBeLessThanOrEqual(3)
       expect(Math.abs(saved.x - 20)).toBeLessThanOrEqual(3)
@@ -908,8 +921,10 @@ test.describe('FolderDock app', () => {
       const prefsFile = path.join(world.userData, 'ui-prefs.json')
       await expect
         .poll(
-          () =>
-            fsSync.existsSync(prefsFile) && JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).folderArt?.A === 'dusk',
+          () => {
+            const p = readPrefs(prefsFile) as { folderArt?: Record<string, string> } | undefined
+            return p?.folderArt?.A === 'dusk'
+          },
           { timeout: 5000 }
         )
         .toBe(true)
@@ -919,8 +934,8 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            return Object.keys(JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).folderArt ?? {}).length === 0
+            const p = readPrefs(prefsFile) as { folderArt?: Record<string, unknown> } | undefined
+            return Object.keys(p?.folderArt ?? {}).length === 0
           },
           { timeout: 5000 }
         )
@@ -954,8 +969,10 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
+            const p = readPrefs(prefsFile) as
+              | { theme?: string; cardColumns?: number; newFolderArt?: string; folderArt?: Record<string, unknown> }
+              | undefined
+            if (!p) return false
             return (
               p.theme === 'dark' &&
               p.cardColumns === 2 &&
@@ -1095,8 +1112,7 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            const s = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).starred ?? []
+            const s = (readPrefs(prefsFile) as { starred?: string[] } | undefined)?.starred ?? []
             return s.includes('A') && s.includes('A/one.md')
           },
           { timeout: 5000 }
@@ -1106,8 +1122,7 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            const s = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8')).starred ?? []
+            const s = (readPrefs(prefsFile) as { starred?: string[] } | undefined)?.starred ?? []
             return s.includes('A') && !s.includes('A/one.md')
           },
           { timeout: 5000 }
@@ -1142,9 +1157,8 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
-            return (p.customColors ?? []).includes('#ff8800') && p.folderArt?.A === '#ff8800'
+            const p = readPrefs(prefsFile) as { customColors?: unknown[]; folderArt?: Record<string, string> } | undefined
+            return (p?.customColors ?? []).includes('#ff8800') && p?.folderArt?.A === '#ff8800'
           },
           { timeout: 5000 }
         )
@@ -1166,9 +1180,8 @@ test.describe('FolderDock app', () => {
       await expect
         .poll(
           () => {
-            if (!fsSync.existsSync(prefsFile)) return false
-            const p = JSON.parse(fsSync.readFileSync(prefsFile, 'utf8'))
-            return (p.customColors ?? []).length === 0 && p.folderArt?.A === '#ff8800' && p.folderArt?.B === '#ff8800'
+            const p = readPrefs(prefsFile) as { customColors?: unknown[]; folderArt?: Record<string, string> } | undefined
+            return (p?.customColors ?? []).length === 0 && p?.folderArt?.A === '#ff8800' && p?.folderArt?.B === '#ff8800'
           },
           { timeout: 5000 }
         )
