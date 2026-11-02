@@ -81,7 +81,7 @@ async function runInternalScriptDrag(
   page: Page,
   srcSel: string,
   dstSel: string | null,
-  opts: { dragover?: boolean; drop?: boolean; dragend?: boolean; forceEffect?: string } = {}
+  opts: { dragover?: boolean; drop?: boolean; dragend?: boolean; forceEffect?: string; shift?: boolean } = {}
 ): Promise<void> {
   await page.evaluate(
     ({ opts, srcSel, dstSel }) => {
@@ -94,12 +94,14 @@ async function runInternalScriptDrag(
         DataTransfer: new () => { dropEffect: string }
         DragEvent: new (
           type: string,
-          init?: { dataTransfer?: unknown; bubbles?: boolean; cancelable?: boolean }
+          init?: { dataTransfer?: unknown; bubbles?: boolean; cancelable?: boolean; shiftKey?: boolean }
         ) => unknown
       }
       const dt = new g.DataTransfer()
       const fire = (el: { dispatchEvent: (ev: unknown) => void }, type: string): void =>
-        el.dispatchEvent(new g.DragEvent(type, { dataTransfer: dt, bubbles: true, cancelable: true }))
+        el.dispatchEvent(
+          new g.DragEvent(type, { dataTransfer: dt, bubbles: true, cancelable: true, shiftKey: opts.shift === true })
+        )
       const src = doc.querySelector(srcSel)
       if (!src) throw new Error(`missing drag source: ${srcSel}`)
       fire(src, 'dragstart')
@@ -1459,7 +1461,7 @@ test.describe('FolderDock app', () => {
       const calls = await startDragCalls(world.app)
       expect(calls).toEqual([{ relPath: 'A/one.md', extra: 0 }])
       // the file is still in the library (refused / cancelled / copy release): the settle
-      // scan must recycle nothing and stay quiet
+      // scan recycles nothing; feedback arrives only at the settle cap (journey below)
       await world.page.waitForTimeout(2200)
       await expect(world.page.locator('.toast')).toHaveCount(0)
       await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
@@ -1474,10 +1476,77 @@ test.describe('FolderDock app', () => {
     try {
       await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
       await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, {})
-      // a real same-drive drop moves the file away; simulate the delivery by deleting it
+      // a genuinely moving drop (Recycle-bin target, future carrier) removes the file;
+      // simulate the move-away delivery by deleting it
       await fsp.rm(path.join(world.root, 'A', 'one.md'))
       await expect.poll(() => fsSync.existsSync(path.join(world.root, 'A', 'one.md')), { timeout: 5_000 }).toBe(false)
       await expect(world.page.locator('.toast')).toContainText('moved out of the library', { timeout: 5_000 })
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toHaveCount(0)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a plain native drag out explains the kept copy once the settle cap elapses', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, {})
+      // the Electron carrier can only deliver copies, so a kept file earns one toast after
+      // the settle cap — naming the Shift gesture for a real move-out
+      await expect(world.page.locator('.toast')).toContainText('still in your library', { timeout: 20_000 })
+      await expect(world.page.locator('.toast')).toContainText('Shift')
+      await expect(world.page.locator('.modal')).toHaveCount(0)
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a Shift drag out resolves the kept copy into a move-out on confirm', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, { shift: true })
+      const modal = world.page.locator('.modal')
+      await expect(modal).toContainText('Move out of the library?', { timeout: 20_000 })
+      await modal.locator('.primary-button', { hasText: 'Move it out' }).click()
+      await expect(world.page.locator('.toast')).toContainText('moved out of the library', { timeout: 5_000 })
+      await expect.poll(() => fsSync.existsSync(path.join(world.root, 'A', 'one.md')), { timeout: 5_000 }).toBe(false)
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toHaveCount(0)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a Shift drag out keeps the file when the user declines the move-out', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, { shift: true })
+      const modal = world.page.locator('.modal')
+      await expect(modal).toContainText('Move out of the library?', { timeout: 20_000 })
+      await modal.locator('.secondary-button').click() // Foot Cancel keeps everything
+      await expect(modal).toHaveCount(0)
+      await expect(world.page.locator('.toast')).toHaveCount(0)
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      expect(fsSync.existsSync(path.join(world.root, 'A', 'one.md'))).toBe(true)
+    } finally {
+      await close(world)
+    }
+  })
+
+  test('a real move-out during a Shift drag beats the confirm modal', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toBeVisible()
+      await runInternalScriptDrag(world.page, '[data-folder="A"] .sheet[data-file="A/one.md"]', null, { shift: true })
+      // Windows itself may still move the file away (a Recycle-bin target, a future
+      // carrier): the "moved out" verdict must win and the modal must never appear
+      await fsp.rm(path.join(world.root, 'A', 'one.md'))
+      await expect(world.page.locator('.toast')).toContainText('moved out of the library', { timeout: 8_000 })
+      await expect(world.page.locator('.modal')).toHaveCount(0)
       await expect(world.page.locator('[data-folder="A"] .sheet[data-file="A/one.md"]')).toHaveCount(0)
     } finally {
       await close(world)

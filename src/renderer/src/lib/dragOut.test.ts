@@ -17,9 +17,16 @@ const { useLibrary } = await import('../state/library')
 
 type DragEventLike = Parameters<typeof dragOut.startOutDrag>[0]
 
-function sourceEvent(): { preventDefault: () => void; dataTransfer: { setData: (t: string, v: string) => void; effectAllowed: string; dropEffect: string } } {
+function sourceEvent(modifiers: { shiftKey?: boolean; ctrlKey?: boolean; altKey?: boolean } = {}): {
+  preventDefault: () => void
+  shiftKey?: boolean
+  ctrlKey?: boolean
+  altKey?: boolean
+  dataTransfer: { setData: (t: string, v: string) => void; effectAllowed: string; dropEffect: string }
+} {
   return {
     preventDefault: vi.fn(),
+    ...modifiers,
     dataTransfer: { setData: vi.fn(), effectAllowed: '', dropEffect: 'none' }
   }
 }
@@ -46,7 +53,7 @@ beforeEach(() => {
   stubApi.scan.mockReset()
   stubApi.deleteFile.mockReset()
   useLibrary.setState({ snapshot: null, error: null })
-  useUI.setState({ toast: null })
+  useUI.setState({ toast: null, modal: null })
 })
 
 afterEach(() => {
@@ -81,22 +88,96 @@ describe('drag out', () => {
   })
 
   describe('settle scan verdict (disk truth)', () => {
-    it('recycles nothing and stays quiet while the file is still in the library', async () => {
+    it('recycles nothing and keeps the file while it is still in the library, then teaches Shift', async () => {
       // Regression (2026-11-01): refused / cancelled / copy-delivered releases all leave the
       // original on disk (measurements: dragend reported 'move', 'move', 'copy' for refusals,
       // and event verdicts are guesses in Chromium — crbug 41183574). The settled disk state
-      // is the only evidence the move-out of a library file may act on.
+      // is the only evidence the move-out of a library file may act on. Since 2026-11-02 the
+      // kept verdict is no longer SILENT: a plain drag earns one educational toast.
       stubApi.scan.mockResolvedValue(result(snap(['A/delta.md'])))
       useLibrary.setState({ snapshot: snap(['A/delta.md']), error: null })
 
       dragOut.startOutDrag(sourceEvent() as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib')
-      await vi.advanceTimersByTimeAsync(13000) // run every step scan to the cap
+      await vi.advanceTimersByTimeAsync(9300) // scans at 1200 / 5200 / 9200 run to the cap
 
-      // scans stop at the settle cap (1200, 5200, 9200) - a kept file must not be re-forever-scanned
+      // scans stop at the settle cap - a kept file must not be re-forever-scanned - and the
+      // plain-drag keep verdict is explained with one educational toast naming Shift
       expect(stubApi.scan).toHaveBeenCalledTimes(3)
+      expect(stubApi.deleteFile).not.toHaveBeenCalled()
+      expect(useUI.getState().toast?.text).toContain('still in your library')
+      expect(useUI.getState().toast?.text).toContain('Shift')
+      expect(useLibrary.getState().snapshot?.folders.some(f => f.files.some(x => x.relPath === 'A/delta.md'))).toBe(true)
+      await vi.advanceTimersByTimeAsync(4000) // the toast auto-dismisses; the file stays
+      expect(useUI.getState().toast).toBeNull()
+      expect(useLibrary.getState().snapshot?.folders.some(f => f.files.some(x => x.relPath === 'A/delta.md'))).toBe(true)
+    })
+
+    it('keeps silently for an explicit copy/shortcut intent (Ctrl, Alt or multi-selection)', async () => {
+      stubApi.scan.mockResolvedValue(result(snap(['A/delta.md'])))
+      useLibrary.setState({ snapshot: snap(['A/delta.md']), error: null })
+
+      dragOut.startOutDrag(sourceEvent({ ctrlKey: true }) as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib')
+      dragOut.startOutDrag(sourceEvent({ altKey: true }) as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib', [
+        'B/other.md'
+      ])
+      await vi.advanceTimersByTimeAsync(13000)
+
+      expect(useUI.getState().toast).toBeNull()
+      expect(useLibrary.getState().snapshot?.folders.some(f => f.files.some(x => x.relPath === 'A/delta.md'))).toBe(true)
+    })
+
+    it('raises the confirm modal on a Shift drag instead of recycling on a guess', async () => {
+      // 2026-11-02: the Electron carrier offers COPY|LINK only (drag_util_views.cc line 47),
+      // so Windows copies instead of moving; a Shift drag explicitly asks for move-out and
+      // the only party allowed to recycle the kept original is the user's own modal click.
+      stubApi.scan.mockResolvedValue(result(snap(['A/delta.md'])))
+      stubApi.deleteFile.mockResolvedValue(result(snap([])))
+      useLibrary.setState({ snapshot: snap(['A/delta.md']), error: null })
+
+      dragOut.startOutDrag(sourceEvent({ shiftKey: true }) as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib')
+      await vi.advanceTimersByTimeAsync(13000)
+
+      expect(stubApi.deleteFile).not.toHaveBeenCalled() // never without the user's click
+      const modal = useUI.getState().modal
+      expect(modal?.type).toBe('confirm')
+      if (modal?.type !== 'confirm') return
+      expect(modal.title).toBe('Move out of the library?')
+      expect(modal.confirmLabel).toBe('Move it out')
+
+      await modal.onConfirm() // the user's own click recycles the library copy
+      expect(stubApi.deleteFile).toHaveBeenCalledWith('A/delta.md')
+      expect(useLibrary.getState().snapshot?.folders.some(f => f.files.length > 0)).toBe(false)
+      expect(useUI.getState().modal).toBeNull()
+      expect(useUI.getState().toast?.text).toContain('moved out of the library')
+    })
+
+    it('keeps everything when the user declines the Shift move-out', async () => {
+      stubApi.scan.mockResolvedValue(result(snap(['A/delta.md'])))
+      useLibrary.setState({ snapshot: snap(['A/delta.md']), error: null })
+
+      dragOut.startOutDrag(sourceEvent({ shiftKey: true }) as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib')
+      await vi.advanceTimersByTimeAsync(13000)
+
+      useUI.getState().closeModal() // the modal's Cancel button / Head cross
       expect(stubApi.deleteFile).not.toHaveBeenCalled()
       expect(useUI.getState().toast).toBeNull()
       expect(useLibrary.getState().snapshot?.folders.some(f => f.files.some(x => x.relPath === 'A/delta.md'))).toBe(true)
+    })
+
+    it('a real move-out during a Shift drag beats the confirm modal', async () => {
+      stubApi.scan
+        .mockResolvedValueOnce(result(snap(['A/delta.md']))) // drag still in flight
+        .mockResolvedValueOnce(result(snap([]))) // shipped out before the settle cap
+      useLibrary.setState({ snapshot: snap(['A/delta.md']), error: null })
+
+      dragOut.startOutDrag(sourceEvent({ shiftKey: true }) as unknown as DragEventLike, 'A/delta.md', 'C:\\Lib')
+      await vi.advanceTimersByTimeAsync(1300)
+      expect(useUI.getState().modal).toBeNull()
+      await vi.advanceTimersByTimeAsync(4300)
+
+      expect(useUI.getState().toast?.text).toContain('moved out of the library')
+      expect(useUI.getState().modal).toBeNull()
+      expect(stubApi.deleteFile).not.toHaveBeenCalled()
     })
 
     it('applies the scan when the OS already moved the file away', async () => {
