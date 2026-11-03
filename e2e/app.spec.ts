@@ -1553,6 +1553,40 @@ test.describe('FolderDock app', () => {
     }
   })
 
+  test('the diagnostics ledger records boot, ui state and the settings card', async () => {
+    const world = await launch({ 'A/one.md': 'x' })
+    try {
+      const logFile = path.join(world.userData, 'logs', 'main.log')
+      await expect
+        .poll(
+          () => {
+            try {
+              return fsSync.readFileSync(logFile, 'utf8')
+            } catch {
+              return ''
+            }
+          },
+          { timeout: 20_000 }
+        )
+        .toContain('boot')
+      expect(fsSync.readFileSync(logFile, 'utf8')).toMatch(/boot: FolderDock \d+\.\d+\.\d+/)
+      await world.page.locator('.footer [aria-label="Open settings"]').click()
+      const settings = world.page.locator('.modal[aria-label="Settings"]')
+      await expect(settings).toBeVisible()
+      await expect
+        .poll(() => fsSync.readFileSync(logFile, 'utf8'), { timeout: 10_000 })
+        .toContain('ui: modal settings')
+      await expect(settings).toContainText('main.log')
+      await settings.locator('.exit').click()
+      await expect
+        .poll(() => fsSync.readFileSync(logFile, 'utf8'), { timeout: 10_000 })
+        .toContain('ui: modal closed')
+      expect(fsSync.existsSync(path.join(world.userData, 'logs', 'hang-snapshot.json'))).toBe(false)
+    } finally {
+      await close(world)
+    }
+  })
+
   test('settings updates card is minimal and updates run behind the scenes', async () => {
     const world = await launch({ 'A/one.md': 'x' })
     try {

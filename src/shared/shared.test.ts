@@ -125,6 +125,13 @@ describe('prefs', () => {
     expect(mergePrefs({ hoverDelay: 'normal' }).hoverDelay).toBe('normal')
     expect(mergePrefs({ hoverDelay: 'slow' }).hoverDelay).toBe('slow')
   })
+
+  it('log level defaults to basic and only accepts verbose', () => {
+    expect(DEFAULT_PREFS.logLevel).toBe('basic')
+    expect(mergePrefs({}).logLevel).toBe('basic')
+    expect(mergePrefs({ logLevel: 'verbose' }).logLevel).toBe('verbose')
+    expect(mergePrefs({ logLevel: 'banana' }).logLevel).toBe('basic')
+  })
   it('marks the hover migration done only when the flag says so', () => {
     expect(DEFAULT_PREFS.hoverDelayMigrated).toBe(false)
     expect(mergePrefs({}).hoverDelayMigrated).toBe(false)
