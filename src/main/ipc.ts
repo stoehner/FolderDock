@@ -12,6 +12,7 @@ import { resolveWithinRoot } from './library/validate'
 import { scanLibrary } from './library/scan'
 import { ensureRoot } from './library/root'
 import type { UpdateWatcher } from './updater'
+import { logLine, logTail, logPaths, logVerbose, setVerbose } from './logger'
 
 export interface MainContext {
   getRoot(): string
@@ -24,10 +25,13 @@ export interface MainContext {
 
 function handle<T>(channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: never[]) => Promise<T>): void {
   ipcMain.handle(channel, async (event, ...args) => {
+    logVerbose('ipc', channel)
     try {
       return { ok: true, data: await fn(event, ...(args as never[])) }
     } catch (err) {
-      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+      const message = err instanceof Error ? err.message : String(err)
+      logLine('error', 'ipc', `${channel} failed: ${message}`)
+      return { ok: false, error: message }
     }
   })
 }
@@ -150,6 +154,10 @@ export function registerIpc(ctx: MainContext): void {
     if (patch.autoCheckUpdates !== undefined) {
       ctx.updates.setAutoCheckEnabled(patch.autoCheckUpdates === true)
     }
+    if (patch.logLevel !== undefined) {
+      setVerbose(ctx.prefs.get().logLevel === 'verbose')
+      logLine('info', 'log', `diagnostics detail set to ${ctx.prefs.get().logLevel}`)
+    }
     if (patch.rootPath !== undefined && patch.rootPath !== before && !ctx.rootOverridden()) {
       const root = patch.rootPath && patch.rootPath.trim() ? path.resolve(patch.rootPath.trim()) : null
       if (root) {
@@ -158,6 +166,32 @@ export function registerIpc(ctx: MainContext): void {
       await ctx.onRootChanged(root ?? ctx.getRoot())
     }
     return next
+  })
+
+  // Renderer diagnostics feed: one-way log reports (errors, heartbeats, ui breadcrumbs),
+  // strictly validated - the renderer is untrusted input like anything else.
+  ipcMain.on(SEND.logReport, (_e, level: unknown, tag: unknown, message: unknown) => {
+    if (typeof message !== 'string') return
+    if (level !== 'info' && level !== 'warn' && level !== 'error') return
+    const safeTag = typeof tag === 'string' && tag.trim() ? tag.slice(0, 40) : 'renderer'
+    logLine(level, safeTag, message.slice(0, 600))
+  })
+
+  handle(CHANNELS.diagnosticsGet, async () => {
+    const paths = logPaths()
+    return {
+      version: app.getVersion(),
+      electron: process.versions.electron ?? '',
+      root: ctx.getRoot(),
+      logDir: paths.dir,
+      logFile: paths.file,
+      level: ctx.prefs.get().logLevel,
+      tail: logTail(50)
+    }
+  })
+
+  handle(CHANNELS.openLogs, async () => {
+    await shell.openPath(logPaths().dir)
   })
 
   handle(CHANNELS.chooseMoveOut, async () => {
@@ -183,6 +217,11 @@ export function registerIpc(ctx: MainContext): void {
   ipcMain.on(SEND.startDrag, (event, relPath: unknown, additional: unknown) => {
     try {
       if (typeof relPath !== 'string') return
+      logLine(
+        'info',
+        'drag',
+        `carrier start for ${relPath}${Array.isArray(additional) && additional.length > 0 ? ` (+${additional.length} more)` : ''}`
+      )
       // E2E harness: never start a real OLE drag loop; record what would be dragged.
       if (process.env.FOLDERDOCK_E2E_NODRAG === '1') {
         const g = globalThis as { __fdE2eStartDragLog?: { relPath: string; extra: number }[] }

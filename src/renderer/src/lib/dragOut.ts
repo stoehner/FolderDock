@@ -2,6 +2,7 @@ import { api, call, errText } from './api'
 import type { LibrarySnapshot } from '../../../shared/types'
 import { useLibrary } from '../state/library'
 import { useUI } from '../state/ui'
+import { diagLog } from './diag'
 
 // Drag-out carrying: EVERY file drag (single and multi-selection) hands the file to the
 // native main-process carrier (`api.startDrag`), which gives Windows a real file object.
@@ -63,6 +64,7 @@ function settleScanChain(relPath: string, intent: OutIntent): void {
       const out = await call(api.scan())
       settled = applySettleOut(out, relPath, listedAtStart)
     } catch (err) {
+      diagLog('error', 'drag-out', `scan failed: ${errText(err)}`)
       useUI.getState().notify(errText(err), 'error')
       return
     }
@@ -86,10 +88,14 @@ function applySettleOut(snap: LibrarySnapshot, relPath: string, listedAtStart: b
   if (!gone) return false
   const name = relPath.split('/').pop() ?? relPath
   // an internal retarget leaves the basename inside the library - the importer owns that flow
-  if (snap.folders.some(f => f.files.some(x => x.name === name))) return true
+  if (snap.folders.some(f => f.files.some(x => x.name === name))) {
+    diagLog('info', 'drag-out', `scan verdict: ${name} re-homed inside the library - the import path owns it, quiet`)
+    return true
+  }
   if (!listedAtStart) return true // the watcher already handled it - stay quiet
   useLibrary.getState().apply(snap)
   useUI.getState().notify(`"${name}" moved out of the library`)
+  diagLog('info', 'drag-out', `scan verdict: ${name} left the library - entry retired`)
   return true
 }
 
@@ -99,9 +105,13 @@ function applySettleOut(snap: LibrarySnapshot, relPath: string, listedAtStart: b
 // educational toast, and the move branch raises a confirm modal whose OWN click is the
 // only thing that may ever recycle the original (Recycle Bin, recoverable).
 function finishKeptOut(relPath: string, intent: OutIntent): void {
-  if (intent === 'copy') return
+  if (intent === 'copy') {
+    diagLog('info', 'drag-out', `${relPath} kept with no feedback (explicit copy/shortcut intent)`)
+    return
+  }
   const name = relPath.split('/').pop() ?? relPath
   if (intent === 'move') {
+    diagLog('info', 'drag-out', `move requested for ${relPath} - opening the confirm modal`)
     useUI.getState().openModal({
       type: 'confirm',
       title: 'Move out of the library?',
@@ -110,12 +120,18 @@ function finishKeptOut(relPath: string, intent: OutIntent): void {
         'Windows always delivers copies from drag-and-drop apps, and it delivers nothing when a target refuses or the drag was cancelled — the disk cannot tell those apart. If a copy landed at the destination, that copy is your file: confirm to retire the library copy. It goes to the Recycle Bin, so nothing is ever lost.',
       confirmLabel: 'Move it out',
       icon: 'info',
+      onCancel: () => {
+        diagLog('info', 'drag-out', `move-out declined for ${relPath} - everything kept`)
+        useUI.getState().closeModal()
+      },
       onConfirm: async () => {
         try {
           const snap = await call(api.deleteFile(relPath))
           useLibrary.getState().apply(snap)
           useUI.getState().notify(`"${name}" moved out of the library`)
+          diagLog('info', 'drag-out', `${relPath} retired by the user's confirm click`)
         } catch (err) {
+          diagLog('error', 'drag-out', `move-out confirm failed: ${errText(err)}`)
           useUI.getState().notify(errText(err), 'error')
         }
         useUI.getState().closeModal()
@@ -123,6 +139,7 @@ function finishKeptOut(relPath: string, intent: OutIntent): void {
     })
     return
   }
+  diagLog('info', 'drag-out', `${relPath} kept with the Shift hint for a plain drag`)
   useUI.getState().notify(`"${name}" is still in your library — hold Shift while dragging to move it out`)
 }
 
@@ -131,6 +148,7 @@ export function startOutDrag(e: React.DragEvent, relPath: string, root: string, 
   if (!root) return
   const others = otherRelPaths && otherRelPaths.length > 0 ? otherRelPaths : undefined
   const intent = intentOf(Boolean(e.shiftKey), Boolean(e.ctrlKey), Boolean(e.altKey), Boolean(others))
+  diagLog('info', 'drag-out', `started ${relPath} as ${intent}${others ? ` multi (${others.length + 1})` : ''}`)
   if (others) {
     api.startDrag(relPath, others)
     // multi-selection drags ride copy semantics on purpose; the originals stay — no settle chain.

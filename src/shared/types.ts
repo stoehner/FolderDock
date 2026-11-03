@@ -60,9 +60,22 @@ export interface Prefs {
   autoCheckUpdates: boolean
   hoverDelayMigrated: boolean
   hoverDelay: HoverDelay
+  logLevel: LogLevelPref
   newFolderArt: string
   backupLocation: string
   customColors: string[]
+}
+
+export type LogLevelPref = 'basic' | 'verbose'
+
+export interface DiagnosticsView {
+  version: string
+  electron: string
+  root: string
+  logDir: string
+  logFile: string
+  level: LogLevelPref
+  tail: string[]
 }
 
 export interface TextFileContent {

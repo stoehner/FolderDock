@@ -3,6 +3,7 @@ import type {
   BackupResult,
   ContentMatch,
   DetailedFileMeta,
+  DiagnosticsView,
   ImportResult,
   MoveOutOutcome,
   LibrarySnapshot,
@@ -13,7 +14,6 @@ import type {
   WriteTextResult,
   IPCResult
 } from './types'
-
 export interface FolderDockBridge {
   appInfo(): Promise<IPCResult<{ version: string; electron: string; root: string; overridden: boolean; defaultRoot: string | null }>>
   scan(): Promise<IPCResult<LibrarySnapshot>>
@@ -48,6 +48,9 @@ export interface FolderDockBridge {
   checkForUpdates(): Promise<IPCResult<UpdateStateView>>
   installUpdate(): Promise<IPCResult<void>>
   openUpdateReleases(): Promise<IPCResult<void>>
+  diagnostics(): Promise<IPCResult<DiagnosticsView>>
+  openLogs(): Promise<IPCResult<void>>
+  logReport(level: 'info' | 'warn' | 'error', tag: string, message: string): void
   startDrag(relPath: string, additionalFiles?: string[]): void
   minimize(): void
   toggleMaximize(): void

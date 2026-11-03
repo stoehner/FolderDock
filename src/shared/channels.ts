@@ -31,11 +31,14 @@ export const CHANNELS = {
   updatesGetState: 'updates:getState',
   updatesCheckNow: 'updates:checkNow',
   updatesInstall: 'updates:install',
-  updatesOpenReleases: 'updates:openReleases'
+  updatesOpenReleases: 'updates:openReleases',
+  diagnosticsGet: 'diagnostics:get',
+  openLogs: 'logs:open'
 } as const
 
 export const SEND = {
   startDrag: 'drag:start',
+  logReport: 'log:report',
   minimize: 'window:minimize',
   toggleMaximize: 'window:toggleMaximize',
   close: 'window:close'

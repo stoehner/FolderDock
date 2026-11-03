@@ -21,6 +21,7 @@ export const DEFAULT_PREFS: Prefs = {
   autoCheckUpdates: true,
   hoverDelayMigrated: false,
   hoverDelay: 'off',
+  logLevel: 'basic',
   newFolderArt: 'varied',
   backupLocation: 'Z:\\REA-Backups',
   customColors: []
@@ -72,6 +73,7 @@ export function mergePrefs(raw: unknown): Prefs {
       r.hoverDelay === 'off' || r.hoverDelay === 'fast' || r.hoverDelay === 'slow' || r.hoverDelay === 'normal'
         ? r.hoverDelay
         : 'off',
+    logLevel: r.logLevel === 'verbose' ? 'verbose' : 'basic',
     newFolderArt: typeof r.newFolderArt === 'string' && isNewFolderArtValue(r.newFolderArt) ? r.newFolderArt : 'varied',
     backupLocation:
       typeof r.backupLocation === 'string' && r.backupLocation.trim() ? r.backupLocation.trim() : DEFAULT_PREFS.backupLocation,

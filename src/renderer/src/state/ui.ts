@@ -3,6 +3,7 @@ import type { Prefs } from '../../../shared/types'
 import { api, call, errText } from '../lib/api'
 import { useLibrary } from './library'
 import { usePrefs } from './prefs'
+import { diagLog } from '../lib/diag'
 
 export type FilterKind = 'all' | 'markdown' | 'image' | 'pdf' | 'favorites' | 'recent'
 
@@ -227,8 +228,14 @@ export const useUI = create<UIState>((set, get) => ({
 
   openMenu: m => set({ contextMenu: m }),
   closeMenu: () => set({ contextMenu: null }),
-  openModal: m => set({ modal: m, contextMenu: null }),
-  closeModal: () => set({ modal: null }),
+  openModal: m => {
+    set({ modal: m, contextMenu: null })
+    diagLog('info', 'ui', `modal ${m.type}${m.type === 'confirm' ? `: ${m.title}` : ''}`)
+  },
+  closeModal: () => {
+    set({ modal: null })
+    diagLog('info', 'ui', 'modal closed')
+  },
 
   openPreview: relPath => {
     set({ previewRelPath: relPath, previewNonce: get().previewNonce + 1, contextMenu: null })

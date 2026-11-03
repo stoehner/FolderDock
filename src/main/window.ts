@@ -2,6 +2,7 @@ import { BrowserWindow, app, screen, shell } from 'electron'
 import path from 'node:path'
 import { EVENTS } from '../shared/channels'
 import type { PrefsStore } from './store'
+import { logLine, writeHangSnapshot } from './logger'
 
 export interface WindowDeps {
   prefs: PrefsStore
@@ -81,6 +82,21 @@ export function createWindow(deps: WindowDeps): BrowserWindow {
     return { action: 'deny' }
   })
   win.webContents.on('will-navigate', e => e.preventDefault())
+
+  // The window's state is exactly what the 2026-11-02 "stuck app" incident lacked.
+  // unresponsive + the hang snapshot make a frozen UI explainable after a force-close.
+  win.webContents.on('unresponsive', () => {
+    logLine('error', 'window', 'renderer unresponsive')
+    writeHangSnapshot('renderer-unresponsive')
+  })
+  win.webContents.on('responsive', () => logLine('info', 'window', 'renderer responsive again after being unresponsive'))
+  win.webContents.on('render-process-gone', (_e, details) => {
+    logLine('error', 'window', `render process gone: ${details.reason} (exit code ${details.exitCode})`)
+  })
+  win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    // severity 2 = warning, 3 = error; production console traffic is minimal
+    if (level >= 2) logLine(level >= 3 ? 'error' : 'warn', 'renderer-console', `${message} (${sourceId}:${line})`)
+  })
   win.webContents.on('before-input-event', (_e, input) => {
     if (!app.isPackaged && input.type === 'keyDown' && input.key === 'F12') {
       win.webContents.toggleDevTools()

@@ -3,6 +3,7 @@ import { autoUpdater } from 'electron-updater'
 import { EVENTS } from '../shared/channels'
 import type { UpdateStateView } from '../shared/types'
 import type { PrefsStore } from './store'
+import { logLine } from './logger'
 import { createInitialUpdateState, reduceUpdateEvent, type UpdaterEvent } from './updater-engine'
 
 export const RELEASES_URL = 'https://github.com/stoehner/FolderDock/releases'
@@ -58,6 +59,7 @@ export class UpdateWatcher {
 
   private set(ev: UpdaterEvent): void {
     this.state = reduceUpdateEvent(this.state, ev, this.version)
+    logLine('info', 'updates', `${this.state.status}${this.state.note ? ` - ${this.state.note.slice(0, 240)}` : ''}`)
     this.deps.getWindow()?.webContents.send(EVENTS.updatesStatus, this.state)
   }
 

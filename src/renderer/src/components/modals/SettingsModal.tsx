@@ -5,7 +5,7 @@ import { useLibrary } from '../../state/library'
 import { usePrefs } from '../../state/prefs'
 import { useUI } from '../../state/ui'
 import { isHexColor } from '../../../../shared/art-values'
-import type { UpdateStateView } from '../../../../shared/types'
+import type { DiagnosticsView, UpdateStateView } from '../../../../shared/types'
 import { ColorPickerSwatch } from '../ColorPickerSwatch'
 import { Head, Foot, Toggle } from './kit'
 
@@ -27,6 +27,8 @@ export function SettingsModal() {
   const newFolderArt = prefs.newFolderArt
   const [info, setInfo] = useState<{ version: string; electron: string; overridden: boolean; defaultRoot: string | null } | null>(null)
   const [updates, setUpdates] = useState<UpdateStateView | null>(null)
+  const [diag, setDiag] = useState<DiagnosticsView | null>(null)
+  const logLevel = prefs.logLevel
   useEffect(() => {
     void call(api.appInfo())
       .then(setInfo)
@@ -34,8 +36,29 @@ export function SettingsModal() {
     void call(api.updateState())
       .then(setUpdates)
       .catch(() => undefined)
+    void call(api.diagnostics())
+      .then(setDiag)
+      .catch(() => undefined)
     return api.onUpdateStatus(state => setUpdates(state))
   }, [])
+
+  async function copyDiagnostics(): Promise<void> {
+    try {
+      const d = diag ?? (await call(api.diagnostics()))
+      const text = [
+        `FolderDock diagnostics - ${new Date().toISOString()}`,
+        `app ${d.version} - electron ${d.electron}`,
+        `library root ${d.root}`,
+        `ledger ${d.logFile} (detail ${d.level})`,
+        'last ledger lines:',
+        ...d.tail
+      ].join('\n')
+      await navigator.clipboard.writeText(text)
+      useUI.getState().notify('Diagnostics copied to the clipboard')
+    } catch (e) {
+      useUI.getState().notify(errText(e), 'error')
+    }
+  }
 
   async function checkForUpdates(): Promise<void> {
     try {
@@ -351,6 +374,36 @@ export function SettingsModal() {
           >
             Scan now
           </button>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Diagnostics</div>
+            <div className="settings-sub">{diag ? diag.logFile : 'The local diagnostic ledger opens from here.'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
+            <button className="secondary-button" onClick={() => void api.openLogs().catch(() => undefined)}>
+              Open logs
+            </button>
+            <button className="secondary-button" onClick={() => void copyDiagnostics()}>
+              Copy diagnostics
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div style={{ minWidth: 0 }}>
+            <div className="settings-label">Diagnostics detail</div>
+            <div className="settings-sub">
+              Verbose adds scan steps and IPC traffic to the ledger. Everything stays on this machine.
+            </div>
+          </div>
+          <div className="theme-choices">
+            <button className={`theme-choice${logLevel === 'basic' ? ' active' : ''}`} onClick={() => patch({ logLevel: 'basic' })}>
+              Basic
+            </button>
+            <button className={`theme-choice${logLevel === 'verbose' ? ' active' : ''}`} onClick={() => patch({ logLevel: 'verbose' })}>
+              Verbose
+            </button>
+          </div>
         </div>
         <div className="settings-row">
           <div style={{ minWidth: 0 }}>

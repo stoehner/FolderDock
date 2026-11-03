@@ -13,6 +13,7 @@ const SETTINGS_KEYS = [
   'closeToTray',
   'confirmDelete',
   'hoverDelay',
+  'logLevel',
   'newFolderArt',
   'backupLocation',
   'customColors'

@@ -14,6 +14,7 @@ import type {
   UpdateStateView,
   WriteTextRequest,
   WriteTextResult,
+  DiagnosticsView,
   IPCResult
 } from '../shared/types'
 
@@ -58,6 +59,9 @@ const api: FolderDockBridge = {
   checkForUpdates: () => invoke<UpdateStateView>(CHANNELS.updatesCheckNow),
   installUpdate: () => invoke<void>(CHANNELS.updatesInstall),
   openUpdateReleases: () => invoke<void>(CHANNELS.updatesOpenReleases),
+  diagnostics: () => invoke<DiagnosticsView>(CHANNELS.diagnosticsGet),
+  openLogs: () => invoke<void>(CHANNELS.openLogs),
+  logReport: (level, tag, message) => ipcRenderer.send(SEND.logReport, level, tag, message),
   createNote: (folderName: string, baseName?: string) => invoke<NoteResult>(CHANNELS.createNote, folderName, baseName),
   startDrag: (relPath: string, additionalFiles?: string[]) => ipcRenderer.send(SEND.startDrag, relPath, additionalFiles),
   minimize: () => ipcRenderer.send(SEND.minimize),
